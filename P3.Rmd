@@ -46,11 +46,11 @@ W_qua <- L_qua / lambda_a
 
 Feta la simulació amb 20000 clients tenim que els valors obtinguts s'assemblen molt als que tenim fent la estimació amb la nostra mostra.
 
-Pensem que els valors han estat molt semblant pel nombre de clients amb que s'ha fet la simulació
+Pensem que els valors han estat molt semblants pel nombre de clients amb que s'ha fet la simulació
 
 rho estimat = 0.48977 i rho_simulat = 0.4844
 
-L estimat = 0.9599 i L_simulat=0.9271 L estimat en cua = 0.470132 i Lsimulat en cua = 0.4428 W estimat = 3.2341 i W_simulat=3.1517 W_estimat en cua = 1.58399 i W_simulat en cua= 1.5054
+L_estimat = 0.9599 i L_simulat=0.9271 L_estimat_en_cua = 0.470132 i L_simulat_en_cua = 0.4428 W_estimat = 3.2341 i W_simulat=3.1517 W_estimat_en_cua = 1.58399 i W_simulat_en_cua= 1.5054
 
 ## Apartat 3
 
