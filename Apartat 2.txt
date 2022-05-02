@@ -1,0 +1,33 @@
+Magnituds fonamentals del Model 
+-------------------------------
+
+	Ocupació mitjana de la cua : 0.4453 (clients)
+
+	Ocupació mitjana del S.E. : 0.9376 (clients)
+
+	Clients perduts per capacitat finita de la cua : 0 (clients)
+
+	Clients d'espera nul·la a la cua : 1022 (clients)
+
+	Temps mig entre arribades : 3.3894 (temps)
+
+	Desviació estàndar entre arribades : 3.5532 (temps)
+
+	Temps mig de servei : 1.6699 (temps)
+
+	Desviació estàndar de servei : 1.6606 (temps)
+
+	Temps mig d'espera en cua : 1.5140 (temps)
+
+	Desviació del temps d'espera en cua : 2.4621 (temps)
+
+	Temps mitjà d'espera de servei : 3.1860 (temps)
+
+	Desviació del temps de servei : 2.9372 (temps)
+
+	Rho Real : 0.4926 (temps)
+
+	Fracció (per u) d'ús del servidor : 
+
+		Servidor1 : 0.4917
+
