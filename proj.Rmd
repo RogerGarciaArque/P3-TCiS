@@ -1,0 +1,2061 @@
+---
+title: "TFG"
+author: "Roger Garcia Arqué"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(readxl)
+library(mice)
+library(dplyr)
+library(forecast)
+library(shiny)
+library(shinydashboard)
+library(ggplot2)
+library(fmsb)
+```
+
+# Lectura de dades
+
+```{r Arima}
+predic_dec <- function(data, any_inici, any_a_predir, positiu){
+    pred <- as.character(any_a_predir)
+    if(positiu==1){
+      for (i in 1:43) {
+          if((tail(forecast(auto.arima(ts(as.matrix(t(data[i,(any_inici-2008):12])), start = c(any_inici,1), frequency = 1)),1)$mean, 1))>0){
+        data[i,][pred] <- tail(forecast(auto.arima(ts(as.matrix(t(data[i,(any_inici-2008):12])), start = c(any_inici,1), frequency = 1)),1)$mean, 1)
+          }else{
+        data[i,][pred] <- 0
+          }
+      }
+    }else{
+      for (i in 1:43) {
+        data[i,][pred] <- tail(forecast(auto.arima(ts(as.matrix(t(data[i,(any_inici-2008):12])), start = c(any_inici,1), frequency = 1)),1)$mean, 1)
+      }
+    }
+  return(data)
+}
+predic_ent <- function(data, any_inici, any_a_predir, positiu){
+    pred <- as.character(any_a_predir)
+    if(positiu==1){
+      for (i in 1:43) {
+        if ((round(tail(forecast(auto.arima(ts(as.matrix(t(data[i,(any_inici-2008):12])), start = c(any_inici,1), frequency = 1)),1)$mean, 1),0)) > 0){
+        data[i,][pred] <- round(tail(forecast(auto.arima(ts(as.matrix(t(data[i,(any_inici-2008):12])), start = c(any_inici,1), frequency = 1)),1)$mean, 1),0)
+        }else{
+        data[i,][pred] <- 0
+        }
+      }
+    }else{
+      for (i in 1:43) {
+        data[i,][pred] <- round(tail(forecast(auto.arima(ts(as.matrix(t(data[i,(any_inici-2008):12])), start = c(any_inici,1), frequency = 1)),1)$mean, 1),0)
+      }
+    }
+  return(data)
+}
+```
+
+## Dim_1
+
+```{r D_1}
+# D_1_1_1
+
+D_1_1_1 <- read_excel("Dimensions/Dimensio_1_Economia_i_treball.xlsx", sheet = "Afiliats_Seguretat_Social", na = "NS")
+
+  # Valors inici
+  CAGR <- (D_1_1_1[23,14]/D_1_1_1[23,7])^(1/(2022/2015))
+  D_1_1_1[23,6] <- round(D_1_1_1[23,7]/CAGR,0)
+  D_1_1_1[23,5] <- round(D_1_1_1[23,6]/CAGR,0)
+  D_1_1_1[23,4] <- round(D_1_1_1[23,5]/CAGR,0)
+  D_1_1_1[23,3] <- round(D_1_1_1[23,4]/CAGR,0)
+  D_1_1_1[23,2] <- round(D_1_1_1[23,3]/CAGR,0)
+
+# D_1_1_2
+  
+D_1_1_2 <- read_excel("Dimensions/Dimensio_1_Economia_i_treball.xlsx", sheet = "Atur_registrat", na = "NS")
+
+  # Valors inici
+  CAGR <- (D_1_1_2[23,14]/D_1_1_2[23,7])^(1/(2022/2015))
+  D_1_1_2[23,6] <- D_1_1_2[23,7]/CAGR
+  D_1_1_2[23,5] <- D_1_1_2[23,6]/CAGR
+  D_1_1_2[23,4] <- D_1_1_2[23,5]/CAGR
+  D_1_1_2[23,3] <- D_1_1_2[23,4]/CAGR
+  D_1_1_2[23,2] <- D_1_1_2[23,3]/CAGR
+
+# D_1_1_3
+  
+D_1_1_3 <- read_excel("Dimensions/Dimensio_1_Economia_i_treball.xlsx", sheet = "Contractes_treball_registrats", na = "NS")
+
+  # Valors inici
+  CAGR <- (D_1_1_3[23,14]/D_1_1_3[23,8])^(1/(2022/2016))
+  D_1_1_3[23,7] <- round(D_1_1_3[23,8]/CAGR,0)
+  D_1_1_3[23,6] <- round(D_1_1_3[23,7]/CAGR,0)
+  D_1_1_3[23,5] <- round(D_1_1_3[23,6]/CAGR,0)
+  D_1_1_3[23,4] <- round(D_1_1_3[23,5]/CAGR,0)
+  D_1_1_3[23,3] <- round(D_1_1_3[23,4]/CAGR,0)
+  D_1_1_3[23,2] <- round(D_1_1_3[23,3]/CAGR,0)
+
+# D_1_2_1
+  
+D_1_2_1 <- read_excel("Dimensions/Dimensio_1_Economia_i_treball.xlsx", sheet = "PIB", na = "NS")
+
+  # Valors inici
+  CAGR <- (D_1_2_1[23,12]/D_1_2_1[23,3])^(1/(2020/2011))
+  D_1_2_1[23,2] <- D_1_2_1[23,3]/CAGR
+  
+  # Valors final
+  D_1_2_1 <- predic_dec(D_1_2_1,2011,2021,1)
+  D_1_2_1 <- predic_dec(D_1_2_1,2011,2022,1)
+
+# D_1_2_2
+  
+D_1_2_2 <- read_excel("Dimensions/Dimensio_1_Economia_i_treball.xlsx", sheet = "VAB", na = "NS")
+
+  # Valors inici
+  CAGR <- (D_1_2_2[23,12]/D_1_2_2[23,3])^(1/(2020/2011))
+  D_1_2_2[23,2] <- D_1_2_2[23,3]/CAGR
+  
+  # Valors final
+  D_1_2_2 <- predic_dec(D_1_2_2,2011,2021,1)
+  D_1_2_2 <- predic_dec(D_1_2_2,2011,2022,1)
+  
+# D_1_2_3
+  
+D_1_2_3 <- read_excel("Dimensions/Dimensio_1_Economia_i_treball.xlsx", sheet = "Renda_familiar_disponible_bruta", na = "NS")
+
+  # Valors final
+  D_1_2_3 <- predic_dec(D_1_2_3,2010,2021,1)
+  D_1_2_3 <- predic_dec(D_1_2_3,2010,2022,1)
+  
+# D_1_3_1
+
+D_1_3_1 <- read_excel("Dimensions/Dimensio_1_Economia_i_treball.xlsx", sheet = "Inversions_reals_pressupostades", na = "NS")
+
+  # Moianès 0
+  D_1_3_1[23,2:11] <- 0
+  D_1_3_1[23,13] <- 0
+  
+  # Valors mig (mitja)
+  D_1_3_1[,5] <- (D_1_3_1[,4]+D_1_3_1[,6])/2
+  D_1_3_1[,8] <- (D_1_3_1[,7]+D_1_3_1[,9])/2
+  D_1_3_1[,10] <- (D_1_3_1[,9]+D_1_3_1[,12])/2
+  D_1_3_1[,11] <- (D_1_3_1[,9]+D_1_3_1[,12])/2
+  D_1_3_1[,13] <- (D_1_3_1[,12]+D_1_3_1[,14])/2
+
+# D_1_3_2
+
+D_1_3_2 <- read_excel("Dimensions/Dimensio_1_Economia_i_treball.xlsx", sheet = "Pressupost_consells_comarcals", na = "NS")
+
+  # Valors inici
+  CAGR <- (D_1_3_2[23,14]/D_1_3_2[23,8])^(1/(2022/2016))
+  D_1_3_2[23,7] <- D_1_3_2[23,8]/CAGR
+  D_1_3_2[23,6] <- D_1_3_2[23,7]/CAGR
+  D_1_3_2[23,5] <- D_1_3_2[23,6]/CAGR
+  D_1_3_2[23,4] <- D_1_3_2[23,5]/CAGR
+  D_1_3_2[23,3] <- D_1_3_2[23,4]/CAGR
+  D_1_3_2[23,2] <- D_1_3_2[23,3]/CAGR
+  
+  # Valors final
+  D_1_3_2[14,11] <- predic_dec(D_1_3_2,2016,2019,1)[14,11]
+  D_1_3_2[14,12] <- predic_dec(D_1_3_2,2016,2020,1)[14,12]
+  D_1_3_2[14,13] <- predic_dec(D_1_3_2,2016,2021,1)[14,13]
+  D_1_3_2[14,14] <- predic_dec(D_1_3_2,2016,2022,1)[14,14]
+  
+```
+
+## Dim_2
+
+```{r D_2}
+# D_2_1_1
+
+D_2_1_1 <- read_excel("Dimensions/Dimensio_2_Oci_i_cultura.xlsx", sheet = "Radiodifusio", na = "NS")
+
+  # Valors inici (Moianès)
+  D_2_1_1[23,2:8] <- 3
+
+  # Valors final
+  D_2_1_1 <- predic_ent(D_2_1_1,2010,2021,1)
+  D_2_1_1 <- predic_ent(D_2_1_1,2010,2022,1)
+  
+# D_2_1_2
+
+D_2_1_2 <- read_excel("Dimensions/Dimensio_2_Oci_i_cultura.xlsx", sheet = "Bens_culturals_interes_nacional", na = "NS")
+
+  # Valors inici
+  CAGR <- (D_2_1_2[,7]/D_2_1_2[,3])^(1/(2015/2011))
+  D_2_1_2[,2] <- round(D_2_1_2[,3]/CAGR, 0)
+  D_2_1_2[23,2:6] <- 25
+  
+  # Valors mig (valor anterior, poca evolució)
+  D_2_1_2[,8] <- D_2_1_2[,7]
+  D_2_1_2[,11] <- D_2_1_2[,10]
+  
+  # Valors final
+  D_2_1_2 <- predic_ent(D_2_1_2,2010,2021,1)
+  D_2_1_2 <- predic_ent(D_2_1_2,2010,2022,1)
+  
+# D_2_1_3
+
+D_2_1_3 <- read_excel("Dimensions/Dimensio_2_Oci_i_cultura.xlsx", sheet = "Biblioteques", na = "NS")
+
+  # Valors inici
+  D_2_1_3[23,2:5] <- 2
+
+  # Valors mig
+  D_2_1_3[,3] <- D_2_1_3[,2]
+  D_2_1_3[,5] <- D_2_1_3[,4]  
+  D_2_1_3[,7] <- D_2_1_3[,6]
+  D_2_1_3[,9] <- D_2_1_3[,8]  
+  
+  # Valors final
+  D_2_1_3 <- predic_ent(D_2_1_3,2010,2019,1)
+  D_2_1_3 <- predic_ent(D_2_1_3,2010,2020,1)
+  D_2_1_3 <- predic_ent(D_2_1_3,2010,2021,1)
+  D_2_1_3 <- predic_ent(D_2_1_3,2010,2022,1)
+  
+# D_2_1_4
+
+D_2_1_4 <- read_excel("Dimensions/Dimensio_2_Oci_i_cultura.xlsx", sheet = "Sales_de_cinema", na = "NS")
+  
+  # Valors Moianès
+  D_2_1_4[23,2:14] <- 0
+  
+  # Valors final
+  D_2_1_4 <- predic_ent(D_2_1_4,2010,2021,1)
+  D_2_1_4 <- predic_ent(D_2_1_4,2010,2022,1)
+  
+# D_2_1_5
+
+D_2_1_5 <- read_excel("Dimensions/Dimensio_2_Oci_i_cultura.xlsx", sheet = "Sessions_de_cinema", na = "NS")
+
+  # Valors Moianès
+  D_2_1_5[23,2:14] <- 0
+
+  # Valors mig
+  D_2_1_5[,9] <- ((D_2_1_5[,11]-D_2_1_5[,8])/3)+D_2_1_5[,8]
+  D_2_1_5[,10] <- D_2_1_5[,11]-((D_2_1_5[,11]-D_2_1_5[,8])/3)
+  
+  # Valors final (no correcte per pandemia)
+  D_2_1_5[24,12] <- predic_ent(D_2_1_5,2010,2020,1)[24,12]
+  D_2_1_5 <- predic_ent(D_2_1_5,2010,2021,1)
+  D_2_1_5 <- predic_ent(D_2_1_5,2010,2022,1)
+  
+# D_2_1_6
+
+D_2_1_6 <- read_excel("Dimensions/Dimensio_2_Oci_i_cultura.xlsx", sheet = "Teatres", na = "NS")
+
+  # Valors Moianès
+  D_2_1_6[23,2:12] <- 0
+  
+  # Valors final
+  D_2_1_6 <- predic_ent(D_2_1_6,2010,2021,1)
+  D_2_1_6 <- predic_ent(D_2_1_6,2010,2022,1)
+  
+# D_2_1_7
+
+D_2_1_7 <- read_excel("Dimensions/Dimensio_2_Oci_i_cultura.xlsx", sheet = "Instalacions_juvenils", na = "NS")
+
+  # Valors inici
+  CAGR <- (D_2_1_7[23,14]/D_2_1_7[23,7])^(1/(2022/2015))
+  D_2_1_7[23,6] <- round(D_2_1_7[23,7]/CAGR, 0)
+  D_2_1_7[23,5] <- round(D_2_1_7[23,6]/CAGR, 0)
+  D_2_1_7[23,4] <- round(D_2_1_7[23,5]/CAGR, 0)
+  D_2_1_7[23,3] <- round(D_2_1_7[23,4]/CAGR, 0)
+  D_2_1_7[23,2] <- round(D_2_1_7[23,3]/CAGR, 0)
+  
+# D_2_1_8
+
+D_2_1_8 <- read_excel("Dimensions/Dimensio_2_Oci_i_cultura.xlsx", sheet = "Espais_esportius", na = "NS")
+
+  # Valors inici
+  CAGR <- (D_2_1_8[23,14]/D_2_1_8[23,7])^(1/(2022/2015))
+  D_2_1_8[23,6] <- round(D_2_1_8[23,7]/CAGR, 0)
+  D_2_1_8[23,5] <- round(D_2_1_8[23,6]/CAGR, 0)
+  D_2_1_8[23,4] <- round(D_2_1_8[23,5]/CAGR, 0)
+  D_2_1_8[23,3] <- round(D_2_1_8[23,4]/CAGR, 0)
+  D_2_1_8[23,2] <- round(D_2_1_8[23,3]/CAGR, 0)
+  
+# D_2_1_9
+
+D_2_1_9 <- read_excel("Dimensions/Dimensio_2_Oci_i_cultura.xlsx", sheet = "Nombre_museus", na = "NS")
+
+  # Valors inici
+  CAGR <- (D_2_1_9[23,13]/D_2_1_9[23,7])^(1/(2021/2015))
+  D_2_1_9[23,6] <- round(D_2_1_9[23,7]/CAGR, 0)
+  D_2_1_9[23,5] <- round(D_2_1_9[23,6]/CAGR, 0)
+  D_2_1_9[23,4] <- round(D_2_1_9[23,5]/CAGR, 0)
+  D_2_1_9[23,3] <- round(D_2_1_9[23,4]/CAGR, 0)
+  D_2_1_9[23,2] <- round(D_2_1_9[23,3]/CAGR, 0)
+  
+  # Valors final
+  D_2_1_9 <- predic_ent(D_2_1_9,2010,2022,1)
+  
+# D_2_2_1
+
+D_2_2_1 <- read_excel("Dimensions/Dimensio_2_Oci_i_cultura.xlsx", sheet = "Magnitud_biblioteques", na = "NS")
+
+  # Valors inici
+  CAGR <- (D_2_2_1[23,10]/D_2_2_1[23,6])^(1/(2018/2014))
+  D_2_2_1[23,5] <- D_2_2_1[23,6]/CAGR
+  D_2_2_1[23,4] <- D_2_2_1[23,5]/CAGR
+  D_2_2_1[23,3] <- D_2_2_1[23,4]/CAGR
+  D_2_2_1[23,2] <- D_2_2_1[23,3]/CAGR
+
+  # Valors mig (valor anterior, poca evolució)
+  D_2_2_1[,3] <- D_2_2_1[,2]
+  D_2_2_1[,5] <- D_2_2_1[,4]
+  D_2_2_1[,7] <- D_2_2_1[,6]
+  D_2_2_1[,9] <- D_2_2_1[,8]
+  
+  # Valors final
+  D_2_2_1 <- predic_dec(D_2_2_1,2010,2019,1)
+  D_2_2_1 <- predic_dec(D_2_2_1,2010,2020,1)  
+  D_2_2_1 <- predic_dec(D_2_2_1,2010,2021,1)
+  D_2_2_1 <- predic_dec(D_2_2_1,2010,2022,1)  
+  
+# D_2_2_2
+
+D_2_2_2 <- read_excel("Dimensions/Dimensio_2_Oci_i_cultura.xlsx", sheet = "Magnitud_cinemes", na = "NS")
+ 
+  # Valors Moianès
+  D_2_2_2[23,2:12] <- 0
+
+  # Valors final
+  D_2_2_2 <- predic_dec(D_2_2_2,2010,2021,1)
+  D_2_2_2 <- predic_dec(D_2_2_2,2010,2022,1)
+  
+# D_2_2_3
+
+D_2_2_3 <- read_excel("Dimensions/Dimensio_2_Oci_i_cultura.xlsx", sheet = "Espectadors_per_sessio_cinema", na = "NS")
+
+  # Valors Moianès
+  D_2_2_3[23,2:14] <- 0
+  
+  # Valors mig
+  D_2_2_3[,9] <- ((D_2_2_3[,11]-D_2_2_3[,8])/3)+D_2_2_3[,8]
+  D_2_2_3[,10] <- D_2_2_3[,11]-((D_2_2_3[,11]-D_2_2_3[,8])/3)
+  
+  # Valors final
+  D_2_2_3 <- predic_dec(D_2_2_3,2010,2021,1)
+  D_2_2_3 <- predic_dec(D_2_2_3,2010,2022,1)
+  
+# D_2_3_1
+
+D_2_3_1 <- read_excel("Dimensions/Dimensio_2_Oci_i_cultura.xlsx", sheet = "Tinença d'ordinador", na = "NS")
+
+  # Valors inici
+  CAGR <- (D_2_3_1[23,13]/D_2_3_1[23,7])^(1/(2021/2015))
+  D_2_3_1[23,6] <- D_2_3_1[23,7]/CAGR
+  D_2_3_1[23,5] <- D_2_3_1[23,6]/CAGR
+  D_2_3_1[23,4] <- D_2_3_1[23,5]/CAGR
+  D_2_3_1[23,3] <- D_2_3_1[23,4]/CAGR
+  D_2_3_1[23,2] <- D_2_3_1[23,3]/CAGR
+  
+  # Valors mig
+  D_2_3_1[,4] <- (D_2_3_1[,3]+D_2_3_1[,5])/2
+  D_2_3_1[,6] <- (D_2_3_1[,5]+D_2_3_1[,7])/2
+  D_2_3_1[,8] <- (D_2_3_1[,7]+D_2_3_1[,9])/2
+  D_2_3_1[,10] <- (D_2_3_1[,9]+D_2_3_1[,11])/2
+  D_2_3_1[,12] <- (D_2_3_1[,11]+D_2_3_1[,13])/2
+  
+  # Valors final
+  D_2_3_1 <- predic_dec(D_2_3_1,2010,2022,1)
+  
+# D_2_3_2
+
+D_2_3_2 <- read_excel("Dimensions/Dimensio_2_Oci_i_cultura.xlsx", sheet = "Tinença d'internet", na = "NS")
+
+  # Valors inici
+  CAGR <- (D_2_3_2[23,13]/D_2_3_2[23,7])^(1/(2021/2015))
+  D_2_3_2[23,6] <- D_2_3_2[23,7]/CAGR
+  D_2_3_2[23,5] <- D_2_3_2[23,6]/CAGR
+  D_2_3_2[23,4] <- D_2_3_2[23,5]/CAGR
+  D_2_3_2[23,3] <- D_2_3_2[23,4]/CAGR
+  D_2_3_2[23,2] <- D_2_3_2[23,3]/CAGR
+  
+  # Valors mig
+  D_2_3_2[,4] <- (D_2_3_2[,3]+D_2_3_2[,5])/2
+  D_2_3_2[,6] <- (D_2_3_2[,5]+D_2_3_2[,7])/2
+  D_2_3_2[,8] <- (D_2_3_2[,7]+D_2_3_2[,9])/2
+  D_2_3_2[,10] <- (D_2_3_2[,9]+D_2_3_2[,11])/2
+  D_2_3_2[,12] <- (D_2_3_2[,11]+D_2_3_2[,13])/2
+  
+  # Valors final
+  D_2_3_2 <- predic_dec(D_2_3_2,2010,2022,1)  
+  
+# D_2_3_3
+
+D_2_3_3 <- read_excel("Dimensions/Dimensio_2_Oci_i_cultura.xlsx", sheet = "Tinença de telefon mobil", na = "NS")
+
+  # Valors inici
+  CAGR <- (D_2_3_3[23,13]/D_2_3_3[23,7])^(1/(2021/2015))
+  D_2_3_3[23,6] <- D_2_3_3[23,7]/CAGR
+  D_2_3_3[23,5] <- D_2_3_3[23,6]/CAGR
+  D_2_3_3[23,4] <- D_2_3_3[23,5]/CAGR
+  D_2_3_3[23,3] <- D_2_3_3[23,4]/CAGR
+  D_2_3_3[23,2] <- D_2_3_3[23,3]/CAGR
+  
+  # Valors mig
+  D_2_3_3[,4] <- (D_2_3_3[,3]+D_2_3_3[,5])/2
+  D_2_3_3[,6] <- (D_2_3_3[,5]+D_2_3_3[,7])/2
+  D_2_3_3[,8] <- (D_2_3_3[,7]+D_2_3_3[,9])/2
+  D_2_3_3[,10] <- (D_2_3_3[,9]+D_2_3_3[,11])/2
+  D_2_3_3[,12] <- (D_2_3_3[,11]+D_2_3_3[,13])/2
+  
+  # Valors final
+  D_2_3_3 <- predic_dec(D_2_3_3,2010,2022,1)  
+  
+```
+
+## Dim_3
+
+```{r D_3}
+# D_3_1_1
+
+D_3_1_1 <- read_excel("Dimensions/Dimensio_3_Salut.xlsx", sheet = "Centres_hospitalaris", na = "NS")
+
+  # Valors inici
+  D_3_1_1[23,2:6] <- 0
+
+# D_3_1_2
+
+D_3_1_2 <- read_excel("Dimensions/Dimensio_3_Salut.xlsx", sheet = "Centres_extrahospitalaris", na = "NS")
+
+  # Valors inici
+  CAGR <- (D_3_1_2[23,14]/D_3_1_2[23,7])^(1/(2022/2015))
+  D_3_1_2[23,6] <- round(D_3_1_2[23,7]/CAGR, 0)
+  D_3_1_2[23,5] <- round(D_3_1_2[23,6]/CAGR, 0)
+  D_3_1_2[23,4] <- round(D_3_1_2[23,5]/CAGR, 0)
+  D_3_1_2[23,3] <- round(D_3_1_2[23,4]/CAGR, 0)
+  D_3_1_2[23,2] <- round(D_3_1_2[23,3]/CAGR, 0)
+  
+# D_3_1_3
+
+D_3_1_3 <- read_excel("Dimensions/Dimensio_3_Salut.xlsx", sheet = "Centres_persones_discapacitat", na = "NS")
+
+  # Valors inici
+  D_3_1_3[23,2:6] <- 3
+
+# D_3_1_4
+
+D_3_1_4 <- read_excel("Dimensions/Dimensio_3_Salut.xlsx", sheet = "Residencies_gent_gran", na = "NS")
+
+  # Valors inici
+  CAGR <- (D_3_1_4[23,14]/D_3_1_4[23,7])^(1/(2022/2015))
+  D_3_1_4[23,6] <- round(D_3_1_4[23,7]/CAGR, 0)
+  D_3_1_4[23,5] <- round(D_3_1_4[23,6]/CAGR, 0)
+  D_3_1_4[23,4] <- round(D_3_1_4[23,5]/CAGR, 0)
+  D_3_1_4[23,3] <- round(D_3_1_4[23,4]/CAGR, 0)
+  D_3_1_4[23,2] <- round(D_3_1_4[23,3]/CAGR, 0)
+
+# D_3_1_5
+
+D_3_1_5 <- read_excel("Dimensions/Dimensio_3_Salut.xlsx", sheet = "Centres_dia", na = "NS")
+
+  # Valors inici
+  CAGR <- (D_3_1_5[23,14]/D_3_1_5[23,7])^(1/(2022/2015))
+  D_3_1_5[23,6] <- round(D_3_1_5[23,7]/CAGR, 0)
+  D_3_1_5[23,5] <- round(D_3_1_5[23,6]/CAGR, 0)
+  D_3_1_5[23,4] <- round(D_3_1_5[23,5]/CAGR, 0)
+  D_3_1_5[23,3] <- round(D_3_1_5[23,4]/CAGR, 0)
+  D_3_1_5[23,2] <- round(D_3_1_5[23,3]/CAGR, 0)
+
+# D_3_1_6
+
+D_3_1_6 <- read_excel("Dimensions/Dimensio_3_Salut.xlsx", sheet = "Farmacies", na = "NS")
+
+  # Valors inici
+  CAGR <- (D_3_1_6[23,14]/D_3_1_6[23,7])^(1/(2022/2015))
+  D_3_1_6[23,6] <- round(D_3_1_6[23,7]/CAGR, 0)
+  D_3_1_6[23,5] <- round(D_3_1_6[23,6]/CAGR, 0)
+  D_3_1_6[23,4] <- round(D_3_1_6[23,5]/CAGR, 0)
+  D_3_1_6[23,3] <- round(D_3_1_6[23,4]/CAGR, 0)
+  D_3_1_6[23,2] <- round(D_3_1_6[23,3]/CAGR, 0)
+
+# D_3_2_1
+
+D_3_2_1 <- read_excel("Dimensions/Dimensio_3_Salut.xlsx", sheet = "Magnitud_centres_hospitalaris", na = "NS")
+
+  # Valors inici
+  D_3_2_1[23,2:6] <- 0
+
+# D_3_2_2
+
+D_3_2_2 <- read_excel("Dimensions/Dimensio_3_Salut.xlsx", sheet = "Magnitud_centres_discapacitat", na = "NS")
+
+  # Valors inici
+  CAGR <- (D_3_2_2[23,14]/D_3_2_2[23,7])^(1/(2022/2015))
+  D_3_2_2[23,6] <- D_3_2_2[23,7]/CAGR
+  D_3_2_2[23,5] <- D_3_2_2[23,6]/CAGR
+  D_3_2_2[23,4] <- D_3_2_2[23,5]/CAGR
+  D_3_2_2[23,3] <- D_3_2_2[23,4]/CAGR
+  D_3_2_2[23,2] <- D_3_2_2[23,3]/CAGR
+
+# D_3_2_3
+
+D_3_2_3 <- read_excel("Dimensions/Dimensio_3_Salut.xlsx", sheet = "Magnitud_centres_dia", na = "NS")
+
+  # Valors inici
+  CAGR <- (D_3_2_3[23,14]/D_3_2_3[23,7])^(1/(2022/2015))
+  D_3_2_3[23,6] <- D_3_2_3[23,7]/CAGR
+  D_3_2_3[23,5] <- D_3_2_3[23,6]/CAGR
+  D_3_2_3[23,4] <- D_3_2_3[23,5]/CAGR
+  D_3_2_3[23,3] <- D_3_2_3[23,4]/CAGR
+  D_3_2_3[23,2] <- D_3_2_3[23,3]/CAGR  
+
+# D_3_2_4
+
+D_3_2_4 <- read_excel("Dimensions/Dimensio_3_Salut.xlsx", sheet = "Magnitud_farmacies", na = "NS")
+
+  # Valors inici
+  CAGR <- (D_3_2_4[23,14]/D_3_2_4[23,7])^(1/(2022/2015))
+  D_3_2_4[23,6] <- D_3_2_4[23,7]/CAGR
+  D_3_2_4[23,5] <- D_3_2_4[23,6]/CAGR
+  D_3_2_4[23,4] <- D_3_2_4[23,5]/CAGR
+  D_3_2_4[23,3] <- D_3_2_4[23,4]/CAGR
+  D_3_2_4[23,2] <- D_3_2_4[23,3]/CAGR    
+
+# D_3_3_1
+
+D_3_3_1 <- read_excel("Dimensions/Dimensio_3_Salut.xlsx", sheet = "Tractaments_drogodependencia", na = "NS")
+
+  # Valors inici
+  CAGR <- (D_3_3_1[23,13]/D_3_3_1[23,7])^(1/(2021/2015))
+  D_3_3_1[23,6] <- round(D_3_3_1[23,7]/CAGR, 0)
+  D_3_3_1[23,5] <- round(D_3_3_1[23,6]/CAGR, 0)
+  D_3_3_1[23,4] <- round(D_3_3_1[23,5]/CAGR, 0)
+  D_3_3_1[23,3] <- round(D_3_3_1[23,4]/CAGR, 0)
+  D_3_3_1[23,2] <- round(D_3_3_1[23,3]/CAGR, 0)
+  
+  # Valors final
+  D_3_3_1 <- predic_ent(D_3_3_1,2010,2022,1)
+```
+
+## Dim_4
+
+```{r D_4}
+# D_4_1_1
+
+D_4_1_1 <- read_excel("Dimensions/Dimensio_4_Educacio.xlsx", sheet = "Centres_educacio_infant_primar", na = "NS")
+
+  # Valors inici
+  CAGR <- (D_4_1_1[23,12]/D_4_1_1[23,8])^(1/(2020/2016))
+  D_4_1_1[23,7] <- round(D_4_1_1[23,8]/CAGR, 0)
+  D_4_1_1[23,6] <- round(D_4_1_1[23,7]/CAGR, 0)
+  D_4_1_1[23,5] <- round(D_4_1_1[23,6]/CAGR, 0)
+  D_4_1_1[23,4] <- round(D_4_1_1[23,5]/CAGR, 0)
+  D_4_1_1[23,3] <- round(D_4_1_1[23,4]/CAGR, 0)
+  D_4_1_1[23,2] <- round(D_4_1_1[23,3]/CAGR, 0)
+  
+  # Valors final
+  D_4_1_1 <- predic_ent(D_4_1_1,2010,2021,1)
+  D_4_1_1 <- predic_ent(D_4_1_1,2010,2022,1)
+  
+# D_4_1_2
+
+D_4_1_2 <- read_excel("Dimensions/Dimensio_4_Educacio.xlsx", sheet = "Centres_educacio_especial", na = "NS")
+
+  # Valors inici
+  D_4_1_2[23,2:7] <- 0  
+  
+  # Valors final
+  D_4_1_2 <- predic_ent(D_4_1_2,2010,2021,1)
+  D_4_1_2 <- predic_ent(D_4_1_2,2010,2022,1)
+  
+# D_4_1_3
+
+D_4_1_3 <- read_excel("Dimensions/Dimensio_4_Educacio.xlsx", sheet = "Centres_educacio_secundaria", na = "NS")
+
+  # Valors inici
+  CAGR <- (D_4_1_3[23,12]/D_4_1_3[23,8])^(1/(2020/2016))
+  D_4_1_3[23,7] <- round(D_4_1_3[23,8]/CAGR, 0)
+  D_4_1_3[23,6] <- round(D_4_1_3[23,7]/CAGR, 0)
+  D_4_1_3[23,5] <- round(D_4_1_3[23,6]/CAGR, 0)
+  D_4_1_3[23,4] <- round(D_4_1_3[23,5]/CAGR, 0)
+  D_4_1_3[23,3] <- round(D_4_1_3[23,4]/CAGR, 0)
+  D_4_1_3[23,2] <- round(D_4_1_3[23,3]/CAGR, 0)  
+  
+  # Valors final
+  D_4_1_3 <- predic_ent(D_4_1_3,2010,2021,1)
+  D_4_1_3 <- predic_ent(D_4_1_3,2010,2022,1)
+  
+# D_4_1_4
+
+D_4_1_4 <- read_excel("Dimensions/Dimensio_4_Educacio.xlsx", sheet = "Centres_educacio_adults", na = "NS")
+
+  # Valors inici
+  D_4_1_4[23,2:8] <- 0  
+  
+  # Valors final
+  D_4_1_4 <- predic_ent(D_4_1_4,2010,2021,1)
+  D_4_1_4 <- predic_ent(D_4_1_4,2010,2022,1)
+  
+# D_4_2_1
+
+D_4_2_1 <- read_excel("Dimensions/Dimensio_4_Educacio.xlsx", sheet = "Qualitat_educacio_infant_primar", na = "NS")
+
+  # Valors inici
+  CAGR <- (D_4_2_1[23,12]/D_4_2_1[23,8])^(1/(2020/2016))
+  D_4_2_1[23,7] <- D_4_2_1[23,8]/CAGR
+  D_4_2_1[23,6] <- D_4_2_1[23,7]/CAGR
+  D_4_2_1[23,5] <- D_4_2_1[23,6]/CAGR
+  D_4_2_1[23,4] <- D_4_2_1[23,5]/CAGR
+  D_4_2_1[23,3] <- D_4_2_1[23,4]/CAGR
+  D_4_2_1[23,2] <- D_4_2_1[23,3]/CAGR 
+  
+  # Valors final
+  D_4_2_1 <- predic_dec(D_4_2_1,2010,2021,1)
+  D_4_2_1 <- predic_dec(D_4_2_1,2010,2022,1)
+  
+# D_4_2_2
+
+D_4_2_2 <- read_excel("Dimensions/Dimensio_4_Educacio.xlsx", sheet = "Qualitat_educacio_especial", na = "NS")
+
+  # Valors inici
+  D_4_2_2[23,2:7] <- 0 
+  
+  # Valors final
+  D_4_2_2 <- predic_dec(D_4_2_2,2010,2021,1)
+  D_4_2_2 <- predic_dec(D_4_2_2,2010,2022,1)
+  
+# D_4_2_3
+
+D_4_2_3 <- read_excel("Dimensions/Dimensio_4_Educacio.xlsx", sheet = "Qualitat_educacio_secundaria", na = "NS")
+
+  # Valors inici
+  CAGR <- (D_4_2_3[23,12]/D_4_2_3[23,8])^(1/(2020/2016))
+  D_4_2_3[23,7] <- D_4_2_3[23,8]/CAGR
+  D_4_2_3[23,6] <- D_4_2_3[23,7]/CAGR
+  D_4_2_3[23,5] <- D_4_2_3[23,6]/CAGR
+  D_4_2_3[23,4] <- D_4_2_3[23,5]/CAGR
+  D_4_2_3[23,3] <- D_4_2_3[23,4]/CAGR
+  D_4_2_3[23,2] <- D_4_2_3[23,3]/CAGR   
+  
+  # Valors final
+  D_4_2_3 <- predic_dec(D_4_2_3,2010,2021,1)
+  D_4_2_3 <- predic_dec(D_4_2_3,2010,2022,1)
+  
+# D_4_2_4
+
+D_4_2_4 <- read_excel("Dimensions/Dimensio_4_Educacio.xlsx", sheet = "Qualitat_educacio_adults", na = "NS")
+
+  # Valors inici
+  D_4_2_4[23,2:8] <- 0 
+  
+  # Valors final
+  D_4_2_4 <- predic_dec(D_4_2_4,2010,2021,1)
+  D_4_2_4 <- predic_dec(D_4_2_4,2010,2022,1)
+  
+```
+
+## Dim_5
+
+```{r D_5}
+# D_5_1_1
+
+D_5_1_1 <- read_excel("Dimensions/Dimensio_5_Medi_ambient.xlsx", sheet = "Pla_espais_interes_natural", na = "NS")
+
+  # Valors inici
+  CAGR <- (D_5_1_1[23,12]/D_5_1_1[23,7])^(1/(2020/2015))
+  D_5_1_1[23,6] <- D_5_1_1[23,7]/CAGR
+  D_5_1_1[23,5] <- D_5_1_1[23,6]/CAGR
+  D_5_1_1[23,4] <- D_5_1_1[23,5]/CAGR
+  D_5_1_1[23,3] <- D_5_1_1[23,4]/CAGR
+  D_5_1_1[23,2] <- D_5_1_1[23,3]/CAGR   
+  
+  # Valors final
+  D_5_1_1 <- predic_dec(D_5_1_1,2010,2021,1)
+  D_5_1_1 <- predic_dec(D_5_1_1,2010,2022,1)
+  
+# D_5_1_2
+
+D_5_1_2 <- read_excel("Dimensions/Dimensio_5_Medi_ambient.xlsx", sheet = "Superficies_forestals_i_conreu", na = "NS")
+
+  # Valors inici
+  CAGR <- (D_5_1_2[23,13]/D_5_1_2[23,6])^(1/(2021/2014))
+  D_5_1_2[23,5] <- D_5_1_2[23,6]/CAGR
+  D_5_1_2[23,4] <- D_5_1_2[23,5]/CAGR
+  D_5_1_2[23,3] <- D_5_1_2[23,4]/CAGR
+  D_5_1_2[23,2] <- D_5_1_2[23,3]/CAGR  
+  
+  # Valors final
+  D_5_1_2 <- predic_dec(D_5_1_2,2010,2022,1)
+  
+# D_5_2_1
+
+D_5_2_1 <- read_excel("Dimensions/Dimensio_5_Medi_ambient.xlsx", sheet = "Consum_aigua", na = "NS")
+
+  # Valors inici
+  CAGR <- (D_5_2_1[23,13]/D_5_2_1[23,4])^(1/(2021/2012))
+  D_5_2_1[23,3] <- D_5_2_1[23,4]/CAGR
+  D_5_2_1[23,2] <- D_5_2_1[23,3]/CAGR
+  
+  # Valors final
+  D_5_2_1 <- predic_dec(D_5_2_1,2010,2022,1)
+  
+# D_5_2_2
+
+D_5_2_2 <- read_excel("Dimensions/Dimensio_5_Medi_ambient.xlsx", sheet = "Residus_industrials", na = "NS")
+
+  # Valors inici
+  CAGR <- (D_5_2_2[23,13]/D_5_2_2[23,7])^(1/(2021/2015))
+  D_5_2_2[23,6] <- D_5_2_2[23,7]/CAGR
+  D_5_2_2[23,5] <- D_5_2_2[23,6]/CAGR
+  D_5_2_2[23,4] <- D_5_2_2[23,5]/CAGR
+  D_5_2_2[23,3] <- D_5_2_2[23,4]/CAGR
+  D_5_2_2[23,2] <- D_5_2_2[23,3]/CAGR
+  
+  # Valors final
+  D_5_2_2 <- predic_dec(D_5_2_2,2010,2022,1)
+  
+# D_5_2_3
+
+D_5_2_3 <- read_excel("Dimensions/Dimensio_5_Medi_ambient.xlsx", sheet = "Residus_municipals", na = "NS")
+
+  # Valors inici
+  CAGR <- (D_5_2_3[23,13]/D_5_2_3[23,7])^(1/(2021/2015))
+  D_5_2_3[23,6] <- D_5_2_3[23,7]/CAGR
+  D_5_2_3[23,5] <- D_5_2_3[23,6]/CAGR
+  D_5_2_3[23,4] <- D_5_2_3[23,5]/CAGR
+  D_5_2_3[23,3] <- D_5_2_3[23,4]/CAGR
+  D_5_2_3[23,2] <- D_5_2_3[23,3]/CAGR
+  
+  # Valors final
+  D_5_2_3 <- predic_dec(D_5_2_3,2010,2022,1)
+  
+# D_5_2_4
+
+D_5_2_4 <- read_excel("Dimensions/Dimensio_5_Medi_ambient.xlsx", sheet = "Generacio_residus_municipals", na = "NS")
+
+  # Valors inici
+  CAGR <- (D_5_2_4[23,13]/D_5_2_4[23,7])^(1/(2021/2015))
+  D_5_2_4[23,6] <- D_5_2_4[23,7]/CAGR
+  D_5_2_4[23,5] <- D_5_2_4[23,6]/CAGR
+  D_5_2_4[23,4] <- D_5_2_4[23,5]/CAGR
+  D_5_2_4[23,3] <- D_5_2_4[23,4]/CAGR
+  D_5_2_4[23,2] <- D_5_2_4[23,3]/CAGR
+  
+  # Valors final
+  D_5_2_4 <- predic_dec(D_5_2_4,2010,2022,1)
+  
+```
+
+## Dim_6
+
+```{r D_6}
+# D_6_1_1
+
+D_6_1_1 <- read_excel("Dimensions/Dimensio_6_Seguretat.xlsx", sheet = "Organs_judicials_funcionament", na = "NS")
+
+  # Valors inici
+  CAGR <- (D_6_1_1[23,13]/D_6_1_1[23,7])^(1/(2021/2015))
+  D_6_1_1[23,6] <- round(D_6_1_1[23,7]/CAGR, 0)
+  D_6_1_1[23,5] <- round(D_6_1_1[23,6]/CAGR, 0)
+  D_6_1_1[23,4] <- round(D_6_1_1[23,5]/CAGR, 0)
+  D_6_1_1[23,3] <- round(D_6_1_1[23,4]/CAGR, 0)
+  D_6_1_1[23,2] <- round(D_6_1_1[23,3]/CAGR, 0)
+  
+  # Valors final
+  D_6_1_1 <- predic_ent(D_6_1_1,2010,2022,1)
+  
+# D_6_1_2
+
+D_6_1_2 <- read_excel("Dimensions/Dimensio_6_Seguretat.xlsx", sheet = "Bombers_generalitat", na = "NS")
+
+  # Valors inici
+  CAGR <- (D_6_1_2[23,13]/D_6_1_2[23,7])^(1/(2021/2015))
+  D_6_1_2[23,6] <- round(D_6_1_2[23,7]/CAGR, 0)
+  D_6_1_2[23,5] <- round(D_6_1_2[23,6]/CAGR, 0)
+  D_6_1_2[23,4] <- round(D_6_1_2[23,5]/CAGR, 0)
+  D_6_1_2[23,3] <- round(D_6_1_2[23,4]/CAGR, 0)
+  D_6_1_2[23,2] <- round(D_6_1_2[23,3]/CAGR, 0)
+  
+  # Valors final
+  D_6_1_2 <- predic_ent(D_6_1_2,2010,2022,1)
+  
+# D_6_1_3
+
+D_6_1_3 <- read_excel("Dimensions/Dimensio_6_Seguretat.xlsx", sheet = "Policia_local", na = "NS")
+
+  # Valors inici
+  D_6_1_3[23,2:6] <- round(D_6_1_3[23, 7:13] %>% unlist() %>%  mean(),0)
+
+  # Valors final
+  D_6_1_3 <- predic_ent(D_6_1_3,2010,2022,1)
+  
+# D_6_2_1
+
+D_6_2_1 <- read_excel("Dimensions/Dimensio_6_Seguretat.xlsx", sheet = "Justicia_juvenil", na = "NS")
+
+  # Valors inici
+  D_6_2_1[23,2:6] <- round(D_6_2_1[23, 7:14] %>% unlist() %>%  mean(),0)
+
+# D_6_2_2
+
+D_6_2_2 <- read_excel("Dimensions/Dimensio_6_Seguretat.xlsx", sheet = "Queixes_consultes", na = "NS")
+
+  # Valors inici
+  CAGR <- (D_6_2_2[23,13]/D_6_2_2[23,7])^(1/(2021/2015))
+  D_6_2_2[23,6] <- round(D_6_2_2[23,7]/CAGR, 0)
+  D_6_2_2[23,5] <- round(D_6_2_2[23,6]/CAGR, 0)
+  D_6_2_2[23,4] <- round(D_6_2_2[23,5]/CAGR, 0)
+  D_6_2_2[23,3] <- round(D_6_2_2[23,4]/CAGR, 0)
+  D_6_2_2[23,2] <- round(D_6_2_2[23,3]/CAGR, 0)
+
+# D_6_2_3
+
+D_6_2_3 <- read_excel("Dimensions/Dimensio_6_Seguretat.xlsx", sheet = "Serveis_socials", na = "NS")
+
+  # Valors inici
+  D_6_2_3[23, 2:10] <- 0
+
+  # Valors final
+  D_6_2_3[7,10] <- predic_ent(D_6_2_3,2010,2018,1)[7,10]
+  D_6_2_3[7,11] <- predic_ent(D_6_2_3,2010,2019,1)[7,11]
+  D_6_2_3[7,12] <- predic_ent(D_6_2_3,2010,2020,1)[7,12]
+  D_6_2_3[7,13] <- predic_ent(D_6_2_3,2010,2021,1)[7,13]
+  D_6_2_3 <- predic_ent(D_6_2_3,2010,2022,1)
+
+```
+
+## Dim_7
+
+```{r D_7}
+# D_7_1_1
+
+D_7_1_1 <- read_excel("Dimensions/Dimensio_7_Poblacio.xlsx", sheet = "Densitat_poblacio", na = "NS")
+
+  # Valors inici
+  CAGR <- (D_7_1_1[23,14]/D_7_1_1[23,7])^(1/(2022/2015))
+  D_7_1_1[23,6] <- D_7_1_1[23,7]/CAGR
+  D_7_1_1[23,5] <- D_7_1_1[23,6]/CAGR
+  D_7_1_1[23,4] <- D_7_1_1[23,5]/CAGR
+  D_7_1_1[23,3] <- D_7_1_1[23,4]/CAGR
+  D_7_1_1[23,2] <- D_7_1_1[23,3]/CAGR
+  
+ D_7_1_1[2:14] <- data.frame(lapply(D_7_1_1[2:14], function(x) abs(x - 25))) 
+
+# D_7_1_2
+
+D_7_1_2 <- read_excel("Dimensions/Dimensio_7_Poblacio.xlsx", sheet = "Natalitat", na = "NS")
+
+  # Valors inici
+  CAGR <- (D_7_1_2[23,14]/D_7_1_2[23,7])^(1/(2022/2015))
+  D_7_1_2[23,6] <- D_7_1_2[23,7]/CAGR
+  D_7_1_2[23,5] <- D_7_1_2[23,6]/CAGR
+  D_7_1_2[23,4] <- D_7_1_2[23,5]/CAGR
+  D_7_1_2[23,3] <- D_7_1_2[23,4]/CAGR
+  D_7_1_2[23,2] <- D_7_1_2[23,3]/CAGR
+
+# D_7_1_3
+
+D_7_1_3 <- read_excel("Dimensions/Dimensio_7_Poblacio.xlsx", sheet = "Mortalitat", na = "NS")
+
+  # Valors inici
+  CAGR <- (D_7_1_3[23,13]/D_7_1_3[23,6])^(1/(2021/2014))
+  D_7_1_3[23,5] <- D_7_1_3[23,6]/CAGR
+  D_7_1_3[23,4] <- D_7_1_3[23,5]/CAGR
+  D_7_1_3[23,3] <- D_7_1_3[23,4]/CAGR
+  D_7_1_3[23,2] <- D_7_1_3[23,3]/CAGR
+  
+  # Valors final
+  D_7_1_3 <- predic_dec(D_7_1_3,2010,2022,1)
+  
+# D_7_1_4
+
+D_7_1_4 <- read_excel("Dimensions/Dimensio_7_Poblacio.xlsx", sheet = "Creixement_natural", na = "NS")
+
+  # Valors inici
+  CAGR <- (D_7_1_4[23,13]/D_7_1_4[23,6])^(1/(2021/2014))
+  D_7_1_4[23,5] <- D_7_1_4[23,6]/CAGR
+  D_7_1_4[23,4] <- D_7_1_4[23,5]/CAGR
+  D_7_1_4[23,3] <- D_7_1_4[23,4]/CAGR
+  D_7_1_4[23,2] <- D_7_1_4[23,3]/CAGR
+  
+  # Valors final
+  D_7_1_4 <- predic_dec(D_7_1_4,2010,2022,0)
+```
+
+```{r}
+#save(list = ls(), file = "Indicadors.RData")
+#rm(list = ls())
+#load("Indicadors.RData")
+```
+
+
+# Construcció de l'estimador amb metodologia INE
+
+## Normalització (AMPI Re-escalant 85;115):
+
+```{r}
+AMPI_pos <- function(df) {
+  res <- df
+  min_vals <- apply(df[, -1], 2, min)
+  max_vals <- apply(df[, -1], 2, max)
+  for (j in 2:ncol(df)) {
+    res[, j] <- (df[, j] - min_vals[j - 1]) / (max_vals[j - 1] - min_vals[j - 1]) * 30 + 85
+  }
+  return(res)
+}
+```
+
+```{r}
+AMPI_neg <- function(df) {
+  res <- df
+  min_vals <- apply(df[, -1], 2, min)
+  max_vals <- apply(df[, -1], 2, max)
+  for (j in 2:ncol(df)) { 
+    res[, j] <- (df[, j] - min_vals[j - 1]) / (max_vals[j - 1] - min_vals[j - 1]) * 30 + 85
+    res[, j] <- 200 - res[, j]
+  }
+  
+  return(res)
+}
+```
+
+```{r}
+D_1_1_1 <- AMPI_pos(D_1_1_1)
+D_1_1_2 <- AMPI_neg(D_1_1_2)
+D_1_1_3 <- AMPI_pos(D_1_1_3)
+D_1_2_1 <- AMPI_pos(D_1_2_1)
+D_1_2_2 <- AMPI_pos(D_1_2_2)
+D_1_2_3 <- AMPI_pos(D_1_2_3)
+D_1_3_1 <- AMPI_pos(D_1_3_1)
+D_1_3_2 <- AMPI_pos(D_1_3_2)
+D_2_1_1 <- AMPI_pos(D_2_1_1)
+D_2_1_2 <- AMPI_pos(D_2_1_2)
+D_2_1_3 <- AMPI_pos(D_2_1_3)
+D_2_1_4 <- AMPI_pos(D_2_1_4)
+D_2_1_5 <- AMPI_pos(D_2_1_5)
+D_2_1_6 <- AMPI_pos(D_2_1_6)
+D_2_1_7 <- AMPI_pos(D_2_1_7)
+D_2_1_8 <- AMPI_pos(D_2_1_8)
+D_2_1_9 <- AMPI_pos(D_2_1_9)
+D_2_2_1 <- AMPI_pos(D_2_2_1)
+D_2_2_2 <- AMPI_pos(D_2_2_2)
+D_2_2_3 <- AMPI_pos(D_2_2_3)
+D_2_3_1 <- AMPI_pos(D_2_3_1)
+D_2_3_2 <- AMPI_pos(D_2_3_2)
+D_2_3_3 <- AMPI_pos(D_2_3_3)
+D_3_1_1 <- AMPI_pos(D_3_1_1)
+D_3_1_2 <- AMPI_pos(D_3_1_2)
+D_3_1_3 <- AMPI_pos(D_3_1_3)
+D_3_1_4 <- AMPI_pos(D_3_1_4)
+D_3_1_5 <- AMPI_pos(D_3_1_5)
+D_3_1_6 <- AMPI_pos(D_3_1_6)
+D_3_2_1 <- AMPI_pos(D_3_2_1)
+D_3_2_2 <- AMPI_pos(D_3_2_2)
+D_3_2_3 <- AMPI_pos(D_3_2_3)
+D_3_2_4 <- AMPI_neg(D_3_2_4)
+D_3_3_1 <- AMPI_neg(D_3_3_1)
+D_4_1_1 <- AMPI_pos(D_4_1_1)
+D_4_1_2 <- AMPI_pos(D_4_1_2)
+D_4_1_3 <- AMPI_pos(D_4_1_3)
+D_4_1_4 <- AMPI_pos(D_4_1_4)
+D_4_2_1 <- AMPI_pos(D_4_2_1)
+D_4_2_2 <- AMPI_pos(D_4_2_2)
+D_4_2_3 <- AMPI_pos(D_4_2_3)
+D_4_2_4 <- AMPI_pos(D_4_2_4)
+D_5_1_1 <- AMPI_pos(D_5_1_1)
+D_5_1_2 <- AMPI_pos(D_5_1_2)
+D_5_2_1 <- AMPI_neg(D_5_2_1)
+D_5_2_2 <- AMPI_neg(D_5_2_2)
+D_5_2_3 <- AMPI_neg(D_5_2_3)
+D_5_2_4 <- AMPI_neg(D_5_2_4)
+D_6_1_1 <- AMPI_pos(D_6_1_1)
+D_6_1_2 <- AMPI_pos(D_6_1_2)
+D_6_1_3 <- AMPI_pos(D_6_1_3)
+D_6_2_1 <- AMPI_neg(D_6_2_1)
+D_6_2_2 <- AMPI_neg(D_6_2_2)
+D_6_2_3 <- AMPI_neg(D_6_2_3)
+D_7_1_1 <- AMPI_neg(D_7_1_1)
+D_7_1_2 <- AMPI_pos(D_7_1_2)
+D_7_1_3 <- AMPI_neg(D_7_1_3)
+D_7_1_4 <- AMPI_pos(D_7_1_4)
+```
+
+## Re-escalar en base el valor de Catalunya l'any 2015 degut a que es l'any amb més informació disponible
+
+```{r}
+reescalar_any_base <- function(data, año_base) {
+  columna_base <- match(año_base, names(data))
+  factor_escala <- as.numeric(100 / data[43, columna_base])
+  data <- data %>% mutate_at(vars(-1), ~ . * factor_escala)
+  return(data)
+}
+```
+
+```{r}
+D_1_1_1 <- reescalar_any_base(D_1_1_1, 2015)
+D_1_1_2 <- reescalar_any_base(D_1_1_2, 2015)
+D_1_1_3 <- reescalar_any_base(D_1_1_3, 2015)
+D_1_2_1 <- reescalar_any_base(D_1_2_1, 2015)
+D_1_2_2 <- reescalar_any_base(D_1_2_2, 2015)
+D_1_2_3 <- reescalar_any_base(D_1_2_3, 2015)
+D_1_3_1 <- reescalar_any_base(D_1_3_1, 2015)
+D_1_3_2 <- reescalar_any_base(D_1_3_2, 2015)
+D_2_1_1 <- reescalar_any_base(D_2_1_1, 2015)
+D_2_1_2 <- reescalar_any_base(D_2_1_2, 2015)
+D_2_1_3 <- reescalar_any_base(D_2_1_3, 2015)
+D_2_1_4 <- reescalar_any_base(D_2_1_4, 2015)
+D_2_1_5 <- reescalar_any_base(D_2_1_5, 2015)
+D_2_1_6 <- reescalar_any_base(D_2_1_6, 2015)
+D_2_1_7 <- reescalar_any_base(D_2_1_7, 2015)
+D_2_1_8 <- reescalar_any_base(D_2_1_8, 2015)
+D_2_1_9 <- reescalar_any_base(D_2_1_9, 2015)
+D_2_2_1 <- reescalar_any_base(D_2_2_1, 2015)
+D_2_2_2 <- reescalar_any_base(D_2_2_2, 2015)
+D_2_2_3 <- reescalar_any_base(D_2_2_3, 2015)
+D_2_3_1 <- reescalar_any_base(D_2_3_1, 2015)
+D_2_3_2 <- reescalar_any_base(D_2_3_2, 2015)
+D_2_3_3 <- reescalar_any_base(D_2_3_3, 2015)
+D_3_1_1 <- reescalar_any_base(D_3_1_1, 2015)
+D_3_1_2 <- reescalar_any_base(D_3_1_2, 2015)
+D_3_1_3 <- reescalar_any_base(D_3_1_3, 2015)
+D_3_1_4 <- reescalar_any_base(D_3_1_4, 2015)
+D_3_1_5 <- reescalar_any_base(D_3_1_5, 2015)
+D_3_1_6 <- reescalar_any_base(D_3_1_6, 2015)
+D_3_2_1 <- reescalar_any_base(D_3_2_1, 2015)
+D_3_2_2 <- reescalar_any_base(D_3_2_2, 2015)
+D_3_2_3 <- reescalar_any_base(D_3_2_3, 2015)
+D_3_2_4 <- reescalar_any_base(D_3_2_4, 2015)
+D_3_3_1 <- reescalar_any_base(D_3_3_1, 2015)
+D_4_1_1 <- reescalar_any_base(D_4_1_1, 2015)
+D_4_1_2 <- reescalar_any_base(D_4_1_2, 2015)
+D_4_1_3 <- reescalar_any_base(D_4_1_3, 2015)
+D_4_1_4 <- reescalar_any_base(D_4_1_4, 2015)
+D_4_2_1 <- reescalar_any_base(D_4_2_1, 2015)
+D_4_2_2 <- reescalar_any_base(D_4_2_2, 2015)
+D_4_2_3 <- reescalar_any_base(D_4_2_3, 2015)
+D_4_2_4 <- reescalar_any_base(D_4_2_4, 2015)
+D_5_1_1 <- reescalar_any_base(D_5_1_1, 2015)
+D_5_1_2 <- reescalar_any_base(D_5_1_2, 2015)
+D_5_2_1 <- reescalar_any_base(D_5_2_1, 2015)
+D_5_2_2 <- reescalar_any_base(D_5_2_2, 2015)
+D_5_2_3 <- reescalar_any_base(D_5_2_3, 2015)
+D_5_2_4 <- reescalar_any_base(D_5_2_4, 2015)
+D_6_1_1 <- reescalar_any_base(D_6_1_1, 2015)
+D_6_1_2 <- reescalar_any_base(D_6_1_2, 2015)
+D_6_1_3 <- reescalar_any_base(D_6_1_3, 2015)
+D_6_2_1 <- reescalar_any_base(D_6_2_1, 2015)
+D_6_2_2 <- reescalar_any_base(D_6_2_2, 2015)
+D_6_2_3 <- reescalar_any_base(D_6_2_3, 2015)
+D_7_1_1 <- reescalar_any_base(D_7_1_1, 2015)
+D_7_1_2 <- reescalar_any_base(D_7_1_2, 2015)
+D_7_1_3 <- reescalar_any_base(D_7_1_3, 2015)
+D_7_1_4 <- reescalar_any_base(D_7_1_4, 2015)
+```
+
+## Agregació:
+
+```{r}
+#AMPI D_1
+D_1 <- data.frame(matrix(0, nrow = 43, ncol = 14))
+colnames(D_1) <- colnames(D_1_1_1)
+for (i in 1:43) {
+  D_1[i, 1] <- D_1_1_1[i, 1]
+  for (j in 2:14) {
+    media <- as.numeric((D_1_1_1[i, j] + D_1_1_2[i, j] + D_1_1_3[i, j] + D_1_2_1[i, j] + D_1_2_2[i, j] + D_1_2_3[i, j] + D_1_3_1[i, j] + D_1_3_2[i, j]) / 8)
+    vari <- as.numeric(((D_1_1_1[i, j] - media)^2 + (D_1_1_2[i, j] - media)^2 + (D_1_1_3[i, j] - media)^2 + (D_1_2_1[i, j] - media)^2 + (D_1_2_2[i, j] - media)^2 + (D_1_2_3[i, j] - media)^2 + (D_1_3_1[i, j] - media)^2 + (D_1_3_2[i, j] - media)^2) / 8)
+    D_1[i, j] <- media - (vari / media)
+  }
+}
+
+#AMPI D_2
+D_2 <- data.frame(matrix(0, nrow = 43, ncol = 14))
+colnames(D_2) <- colnames(D_2_1_1)
+for (i in 1:43) {
+  D_2[i, 1] <- D_2_1_1[i, 1]
+  for (j in 2:14) {
+    media <- as.numeric((D_2_1_1[i, j] + D_2_1_2[i, j] + D_2_1_3[i, j] + D_2_1_4[i, j] + D_2_1_5[i, j] + D_2_1_6[i, j] + D_2_1_7[i, j] + D_2_1_8[i, j] + D_2_1_9[i, j] + D_2_2_1[i, j] + D_2_2_2[i, j] + D_2_2_3[i, j] + D_2_3_1[i, j] + D_2_3_2[i, j] + D_2_3_3[i, j]) / 15)
+    vari <- as.numeric(((D_2_1_1[i, j] - media)^2 + (D_2_1_2[i, j] - media)^2 + (D_2_1_3[i, j] - media)^2 + (D_2_1_4[i, j] - media)^2 + (D_2_1_5[i, j] - media)^2 + (D_2_1_6[i, j] - media)^2 + (D_2_1_7[i, j] - media)^2 + (D_2_1_8[i, j] - media)^2 + (D_2_1_9[i, j] - media)^2 + (D_2_2_1[i, j] - media)^2 + (D_2_2_2[i, j] - media)^2 + (D_2_2_3[i, j] - media)^2 + (D_2_1_8[i, j] - media)^2 + (D_2_1_8[i, j] - media)^2 + (D_2_3_1[i, j] - media)^2 + (D_2_3_2[i, j] - media)^2 + (D_2_3_3[i, j] - media)^2) / 15)
+    D_2[i, j] <- media - (vari / media)
+  }
+}
+#AMPI D_3
+D_3 <- data.frame(matrix(0, nrow = 43, ncol = 14))
+colnames(D_3) <- colnames(D_3_1_1)
+for (i in 1:43) {
+  D_3[i, 1] <- D_3_1_1[i, 1]
+  for (j in 2:14) {
+    media <- as.numeric((D_3_1_1[i, j] + D_3_1_2[i, j] + D_3_1_3[i, j] + D_3_1_4[i, j] + D_3_1_5[i, j] + D_3_1_6[i, j] + D_3_2_1[i, j] + D_3_2_2[i, j] + D_3_2_3[i, j] + D_3_2_4[i, j] + D_3_3_1[i, j]) / 11)
+    vari <- as.numeric(((D_3_1_1[i, j] - media)^2 + (D_3_1_2[i, j] - media)^2 + (D_3_1_3[i, j] - media)^2 + (D_3_1_4[i, j] - media)^2 + (D_3_1_5[i, j] - media)^2 + (D_3_1_6[i, j] - media)^2 + (D_3_2_1[i, j] - media)^2 + (D_3_2_2[i, j] - media)^2 + (D_3_2_3[i, j] - media)^2 + (D_3_2_4[i, j] - media)^2 + (D_3_3_1[i, j] - media)^2) / 11)
+    D_3[i, j] <- media - (vari / media)
+  }
+}
+
+#AMPI D_4
+D_4 <- data.frame(matrix(0, nrow = 43, ncol = 14))
+colnames(D_4) <- colnames(D_4_1_1)
+for (i in 1:43) {
+  D_4[i, 1] <- D_4_1_1[i, 1]
+  for (j in 2:14) {
+    media <- as.numeric((D_4_1_1[i, j] + D_4_1_2[i, j] + D_4_1_3[i, j] + D_4_1_4[i, j] + D_4_2_1[i, j] + D_4_2_2[i, j] + D_4_2_3[i, j] + D_4_2_4[i, j]) / 8)
+    vari <- as.numeric(((D_4_1_1[i, j] - media)^2 + (D_4_1_2[i, j] - media)^2 + (D_4_1_3[i, j] - media)^2 + (D_4_1_4[i, j] - media)^2 + (D_4_2_1[i, j] - media)^2 + (D_4_2_2[i, j] - media)^2 + (D_4_2_3[i, j] - media)^2 + (D_4_2_4[i, j] - media)^2) / 8)
+    D_4[i, j] <- media - (vari / media)
+  }
+}
+
+#AMPI D_5
+D_5 <- data.frame(matrix(0, nrow = 43, ncol = 14))
+colnames(D_5) <- colnames(D_5_1_1)
+for (i in 1:43) {
+  D_5[i, 1] <- D_5_1_1[i, 1]
+  for (j in 2:14) {
+    media <- as.numeric((D_5_1_1[i, j] + D_5_1_2[i, j] + D_5_2_1[i, j] + D_5_2_2[i, j] + D_5_2_3[i, j] + D_5_2_4[i, j]) / 6)
+    vari <- as.numeric(((D_5_1_1[i, j] - media)^2 + (D_5_1_2[i, j] - media)^2 + (D_5_2_1[i, j] - media)^2 + (D_5_2_2[i, j] - media)^2 + (D_5_2_3[i, j] - media)^2 + (D_5_2_4[i, j] - media)^2 ) / 6)
+    D_5[i, j] <- media - (vari / media)
+  }
+}
+
+#AMPI D_6
+D_6 <- data.frame(matrix(0, nrow = 43, ncol = 14))
+colnames(D_6) <- colnames(D_6_1_1)
+for (i in 1:43) {
+  D_6[i, 1] <- D_6_1_1[i, 1]
+  for (j in 2:14) {
+    media <- as.numeric((D_6_1_1[i, j] + D_6_1_2[i, j] + D_6_1_3[i, j] + D_6_2_1[i, j] + D_6_2_2[i, j] + D_6_2_3[i, j]) / 6)
+    vari <- as.numeric(((D_6_1_1[i, j] - media)^2 + (D_6_1_2[i, j] - media)^2 + (D_6_1_3[i, j] - media)^2 + (D_6_2_1[i, j] - media)^2 + (D_6_2_2[i, j] - media)^2 + (D_6_2_3[i, j] - media)^2) / 6)
+    D_6[i, j] <- media - (vari / media)
+  }
+}
+
+#AMPI D_7
+D_7 <- data.frame(matrix(0, nrow = 43, ncol = 14))
+colnames(D_7) <- colnames(D_7_1_1)
+for (i in 1:43) {
+  D_7[i, 1] <- D_7_1_1[i, 1]
+  for (j in 2:14) {
+    media <- as.numeric((D_7_1_1[i, j] + D_7_1_2[i, j] + D_7_1_3[i, j] + D_7_1_4[i, j]) / 4)
+    vari <- as.numeric(((D_7_1_1[i, j] - media)^2 + (D_7_1_2[i, j] - media)^2 + (D_7_1_3[i, j] - media)^2 + (D_7_1_4[i, j] - media)^2) / 4)
+    D_7[i, j] <- media - (vari / media)
+  }
+}
+```
+
+```{r}
+IMCV <- data.frame(matrix(0, nrow = 43, ncol = 14))
+colnames(IMCV) <- colnames(D_1)
+for (i in 1:43) {
+  IMCV[i, 1] <- D_1[i, 1]
+  for (j in 2:14) {
+    IMCV[i, j] <- as.numeric((D_1[i, j] + D_2[i, j] + D_3[i, j] + D_4[i, j] + D_5[i, j] + D_6[i, j] + D_7[i, j]) / 7)
+  }
+}
+```
+
+```{r}
+#save(D_1, D_2, D_3, D_4, D_5, D_6, D_7, IMCV, file = "Dimensions.RData")
+#rm(list = ls())
+#load("Dimensions.RData")
+```
+
+
+
+## Shiny
+
+### Comparació comarques indicador:
+
+```{r eval=FALSE, include=FALSE}
+ui <- fluidPage(
+  titlePanel("Indicador Compost de la Qualitat de Vida"),
+  sidebarLayout(
+    sidebarPanel(
+      selectInput("year", "Selecciona un any:", 
+                  choices = colnames(D_1)[-1], selected = "2022"),
+      sliderInput("slider_D1", "Importancia Economia i treball:", min = 0, max = 10, value = 5),
+      sliderInput("slider_D2", "Importancia Oci i cultura:", min = 0, max = 10, value = 5),
+      sliderInput("slider_D3", "Importancia Salut:", min = 0, max = 10, value = 5),
+      sliderInput("slider_D4", "Importancia Educació:", min = 0, max = 10, value = 5),
+      sliderInput("slider_D5", "Importancia Medi ambient:", min = 0, max = 10, value = 5),
+      sliderInput("slider_D6", "Importancia Seguretat:", min = 0, max = 10, value = 5),
+      sliderInput("slider_D7", "Importancia Població:", min = 0, max = 10, value = 5)
+    ),
+    mainPanel(
+      plotOutput("barplot", height = "800px")
+    )
+  )
+)
+server <- function(input, output) {
+  output$barplot <- renderPlot({
+    
+    year_selected <- as.numeric(input$year)
+    
+    importancia_D1 <- input$slider_D1
+    importancia_D2 <- input$slider_D2
+    importancia_D3 <- input$slider_D3
+    importancia_D4 <- input$slider_D4
+    importancia_D5 <- input$slider_D5
+    importancia_D6 <- input$slider_D6
+    importancia_D7 <- input$slider_D7
+    
+    datos_filtrados_D1 <- D_1[, c("Comarca", as.character(year_selected))]
+    datos_filtrados_D2 <- D_2[, c("Comarca", as.character(year_selected))]
+    datos_filtrados_D3 <- D_3[, c("Comarca", as.character(year_selected))]
+    datos_filtrados_D4 <- D_4[, c("Comarca", as.character(year_selected))]
+    datos_filtrados_D5 <- D_5[, c("Comarca", as.character(year_selected))]
+    datos_filtrados_D6 <- D_6[, c("Comarca", as.character(year_selected))]
+    datos_filtrados_D7 <- D_7[, c("Comarca", as.character(year_selected))]
+    
+    media_ponderada <- (
+      (importancia_D1 * datos_filtrados_D1[, 2]) +
+      (importancia_D2 * datos_filtrados_D2[, 2]) +
+      (importancia_D3 * datos_filtrados_D3[, 2]) +
+      (importancia_D4 * datos_filtrados_D4[, 2]) +
+      (importancia_D5 * datos_filtrados_D5[, 2]) +
+      (importancia_D6 * datos_filtrados_D6[, 2]) +
+      (importancia_D7 * datos_filtrados_D7[, 2])
+    ) / (
+      importancia_D1 + importancia_D2 + importancia_D3 +
+      importancia_D4 + importancia_D5 + importancia_D6 + importancia_D7
+    )
+
+ggplot(data.frame(Comarca = datos_filtrados_D1$Comarca, Media = media_ponderada), 
+         aes(x = reorder(Comarca, -Media), y = Media, fill = Comarca)) +
+    geom_bar(stat = "identity", width = 0.7) +
+    labs(x = paste("Comarca (", year_selected, ")", sep = ""), y = "Mitjana ponderada") +
+    theme_minimal() +
+    theme(plot.title = element_text(size = 20), axis.text.y = element_text(size = 14)) +
+    scale_fill_manual(values = c("Catalunya" = "red")) +
+    guides(fill = FALSE) +
+    coord_flip()
+}, height = 800) 
+
+}
+shinyApp(ui, server)
+```
+
+### Evolució temps:
+
+```{r eval=FALSE, include=FALSE}
+ui <- dashboardPage(
+  dashboardHeader(title = "Indicador Compost de la Qualitat de Vida"),
+  dashboardSidebar(
+    checkboxGroupInput("comarcas", "Selecciona una o més comarques:",
+                       choices = unique(D_1$Comarca),
+                       selected = NULL)
+  ),
+  dashboardBody(
+    column(
+      width = 12,
+      box(
+        title = "Indicador Compost",
+        plotOutput("grafico_imcv", height = "200px") 
+      )
+    ),
+    fluidRow(
+      box(
+        title = "Economia i treball",
+        plotOutput("grafico_1", height = "100px")
+      ),
+      box(
+        title = "Oci i cultura",
+        plotOutput("grafico_2", height = "100px")
+      ),
+      box(
+        title = "Salut",
+        plotOutput("grafico_3", height = "100px")
+      ),
+      box(
+        title = "Educació",
+        plotOutput("grafico_4", height = "100px")
+      ),
+      box(
+        title = "Medi ambient",
+        plotOutput("grafico_5", height = "100px")
+      ),
+      box(
+        title = "Seguretat",
+        plotOutput("grafico_6", height = "100px")
+      ),
+      box(
+        title = "Població",
+        plotOutput("grafico_7", height = "100px")
+      )
+    )
+  )
+)
+
+server <- function(input, output) {
+
+  crear_grafico <- function(base_datos, id_grafico) {
+    output[[id_grafico]] <- renderPlot({
+      comarcas_seleccionadas <- input$comarcas
+
+      datos_comarcas <- base_datos %>%
+        filter(Comarca %in% comarcas_seleccionadas)
+      
+      datos_comarcas_largo <- tidyr::pivot_longer(datos_comarcas, cols = -Comarca, names_to = "Año", values_to = "Valor")
+      
+      ggplot(datos_comarcas_largo, aes(x = as.integer(Año), y = Valor, color = Comarca)) +
+        geom_line() +
+        labs(x = "Any",
+             y = "Valor de l'Indicador") +
+        scale_color_discrete(name = "Comarca")
+    })
+  }
+  
+  output$grafico_imcv <- renderPlot({
+    comarcas_seleccionadas <- input$comarcas
+    
+
+    datos_imcv <- IMCV %>%
+      filter(Comarca %in% comarcas_seleccionadas)
+    
+    datos_imcv_largo <- tidyr::pivot_longer(datos_imcv, cols = -Comarca, names_to = "Año", values_to = "Valor")
+    
+    ggplot(datos_imcv_largo, aes(x = as.integer(Año), y = Valor, color = Comarca)) +
+      geom_line() +
+      labs(title = "Evolució de l'Indicador compost per Comarques",
+           x = "Any",
+           y = "Valor de l'Indicador") +
+      scale_color_discrete(name = "Comarca")
+  })
+  
+  crear_grafico(D_1, "grafico_1")
+  crear_grafico(D_2, "grafico_2")
+  crear_grafico(D_3, "grafico_3")
+  crear_grafico(D_4, "grafico_4")
+  crear_grafico(D_5, "grafico_5")
+  crear_grafico(D_6, "grafico_6")
+  crear_grafico(D_7, "grafico_7")
+}
+
+shinyApp(ui, server)
+```
+
+## Anàlisis de resultats
+
+```{r}
+comarca_seleccionada <- "Catalunya"
+data_comarca <- IMCV %>%
+  filter(Comarca == comarca_seleccionada)
+
+columna_anys <- colnames(data_comarca)[2:ncol(data_comarca)]
+
+tabla_resultados <- data.frame(
+  Any = as.integer(columna_anys),
+  Indicador = as.numeric(unlist(data_comarca[, 2:ncol(data_comarca)]))
+)
+
+print(tabla_resultados)
+```
+
+```{r}
+grafico_lineas <- ggplot(tabla_resultados, aes(x = Any, y = Indicador)) +
+  geom_line() +
+  labs(title = paste("Evolució de l'indicador per", comarca_seleccionada),
+       x = "Any",
+       y = "Valor Índex Compost")
+print(grafico_lineas)
+```
+
+```{r}
+tabla <- data.frame(
+  "Dimensió" = c("Economia i treball", "Oci i cultura", "Salut", "Educació", "Medi ambient", "Seguretat", "Població"),
+  "MAX" = c(105, 105, 105, 105, 105, 105, 105),
+  "MIN" = c(95, 95, 95, 95, 95, 95, 95),
+  "Any 2010" = c(99.51394, 102.02416, 100.42215, 100.66027, 99.37592, 100, 95.39466),
+  "Any 2015" = c(100, 100, 100, 100, 100, 100, 100),
+  "Any 2022" = c(100.31390, 101.21104, 99.67313, 99.12214, 99.90235, 100, 99.20428)
+)
+
+print(tabla[,-c(2,3)])
+tabla <- as.data.frame(t(tabla))
+colnames(tabla) <- tabla[1, ]
+tabla <- tabla[-1,]
+tabla <- as.data.frame(apply(tabla, 2, as.numeric))
+rownames(tabla) <- c("MAX", "MIN", "2010", "2015", "2020")
+
+
+radarchart(tabla,
+           cglty = 1,       # Tipo de línea del grid
+           cglcol = "gray", # Color del grid
+           pcol = 2:4,      # Color para cada línea
+           plwd = 2,        # Ancho para cada línea
+           plty = 1)        # Tipos de línea 
+
+legend("topright",
+       legend = paste("Any", c(2010, 2015, 2022)),
+       bty = "n", pch = 20, col = areas,
+       text.col = "grey25", pt.cex = 2)
+ 
+```
+
+```{r}
+# D_1
+comarca_seleccionada <- "Catalunya"
+data_comarca <- D_1 %>%
+  filter(Comarca == comarca_seleccionada)
+
+columna_anys <- colnames(data_comarca)[2:ncol(data_comarca)]
+
+tabla_resultados_D_1 <- data.frame(
+  Año = as.integer(columna_anys),
+  Valor = as.numeric(unlist(data_comarca[, 2:ncol(data_comarca)]))
+)
+
+grafico_lineas <- ggplot(tabla_resultados_D_1, aes(x = Año, y = Valor, color = "Economia i treball")) +
+  geom_line() +
+  labs(title = paste("Evolució de l'indicador per", comarca_seleccionada),
+       x = "Any",
+       y = "Valor de l'Indicador")
+
+# D_2
+data_comarca <- D_2 %>%
+  filter(Comarca == comarca_seleccionada)
+tabla_resultados_D_2 <- data.frame(
+  Año = as.integer(columna_anys),
+  Valor = as.numeric(unlist(data_comarca[, 2:ncol(data_comarca)]))
+)
+
+grafico_lineas_nuevo <- grafico_lineas +
+  geom_line(data = tabla_resultados_D_2, aes(x = Año, y = Valor, color = "Oci i cultura")) +
+  labs(color = "Indicador:")
+
+# D_3
+data_comarca <- D_3 %>%
+  filter(Comarca == comarca_seleccionada)
+tabla_resultados_D_3 <- data.frame(
+  Año = as.integer(columna_anys),
+  Valor = as.numeric(unlist(data_comarca[, 2:ncol(data_comarca)]))
+)
+
+grafico_lineas_nuevo <- grafico_lineas_nuevo +
+  geom_line(data = tabla_resultados_D_3, aes(x = Año, y = Valor, color = "Salut"))
+
+# D_4
+data_comarca <- D_4 %>%
+  filter(Comarca == comarca_seleccionada)
+tabla_resultados_D_4 <- data.frame(
+  Año = as.integer(columna_anys),
+  Valor = as.numeric(unlist(data_comarca[, 2:ncol(data_comarca)]))
+)
+
+grafico_lineas_nuevo <- grafico_lineas_nuevo +
+  geom_line(data = tabla_resultados_D_4, aes(x = Año, y = Valor, color = "Educació"))
+
+# D_5
+data_comarca <- D_5 %>%
+  filter(Comarca == comarca_seleccionada)
+tabla_resultados_D_5 <- data.frame(
+  Año = as.integer(columna_anys),
+  Valor = as.numeric(unlist(data_comarca[, 2:ncol(data_comarca)]))
+)
+
+grafico_lineas_nuevo <- grafico_lineas_nuevo +
+  geom_line(data = tabla_resultados_D_5, aes(x = Año, y = Valor, color = "Medi ambient"))
+
+# D_6
+data_comarca <- D_6 %>%
+  filter(Comarca == comarca_seleccionada)
+tabla_resultados_D_6 <- data.frame(
+  Año = as.integer(columna_anys),
+  Valor = as.numeric(unlist(data_comarca[, 2:ncol(data_comarca)]))
+)
+
+grafico_lineas_nuevo <- grafico_lineas_nuevo +
+  geom_line(data = tabla_resultados_D_6, aes(x = Año, y = Valor, color = "Seguretat"))
+
+# D_7
+data_comarca <- D_7 %>%
+  filter(Comarca == comarca_seleccionada)
+tabla_resultados_D_7 <- data.frame(
+  Año = as.integer(columna_anys),
+  Valor = as.numeric(unlist(data_comarca[, 2:ncol(data_comarca)]))
+)
+
+grafico_lineas_nuevo <- grafico_lineas_nuevo +
+  geom_line(data = tabla_resultados_D_7, aes(x = Año, y = Valor, color = "Població"))
+
+# IMCV
+data_comarca <- IMCV %>%
+  filter(Comarca == comarca_seleccionada)
+tabla_resultados_IMCV <- data.frame(
+  Año = as.integer(columna_anys),
+  Valor = as.numeric(unlist(data_comarca[, 2:ncol(data_comarca)]))
+)
+
+grafico_lineas_nuevo <- grafico_lineas_nuevo +
+  geom_line(data = tabla_resultados_IMCV, aes(x = Año, y = Valor, color = "IMCV"),size = 1.5)
+
+# Imprimir el gráfico con ambas líneas
+print(grafico_lineas_nuevo)
+
+```
+
+
+
+```{r}
+#rm(list = ls())
+#load("Indicadors.RData")
+```
+
+## Normalització :
+
+```{r}
+norma <- function(df) {
+  res <- df
+  min_vals <- apply(df[, -1], 2, min)
+  max_vals <- apply(df[, -1], 2, max)
+  for (j in 2:ncol(df)) {
+    res[, j] <- (df[, j] - min_vals[j - 1]) / (max_vals[j - 1] - min_vals[j - 1])
+  }
+  return(res)
+}
+```
+
+```{r}
+D_1_1_1 <- norma(D_1_1_1)
+D_1_1_2 <- norma(D_1_1_2)
+D_1_1_3 <- norma(D_1_1_3)
+D_1_2_1 <- norma(D_1_2_1)
+D_1_2_2 <- norma(D_1_2_2)
+D_1_2_3 <- norma(D_1_2_3)
+D_1_3_1 <- norma(D_1_3_1)
+D_1_3_2 <- norma(D_1_3_2)
+D_2_1_1 <- norma(D_2_1_1)
+D_2_1_2 <- norma(D_2_1_2)
+D_2_1_3 <- norma(D_2_1_3)
+D_2_1_4 <- norma(D_2_1_4)
+D_2_1_5 <- norma(D_2_1_5)
+D_2_1_6 <- norma(D_2_1_6)
+D_2_1_7 <- norma(D_2_1_7)
+D_2_1_8 <- norma(D_2_1_8)
+D_2_1_9 <- norma(D_2_1_9)
+D_2_2_1 <- norma(D_2_2_1)
+D_2_2_2 <- norma(D_2_2_2)
+D_2_2_3 <- norma(D_2_2_3)
+D_2_3_1 <- norma(D_2_3_1)
+D_2_3_2 <- norma(D_2_3_2)
+D_2_3_3 <- norma(D_2_3_3)
+D_3_1_1 <- norma(D_3_1_1)
+D_3_1_2 <- norma(D_3_1_2)
+D_3_1_3 <- norma(D_3_1_3)
+D_3_1_4 <- norma(D_3_1_4)
+D_3_1_5 <- norma(D_3_1_5)
+D_3_1_6 <- norma(D_3_1_6)
+D_3_2_1 <- norma(D_3_2_1)
+D_3_2_2 <- norma(D_3_2_2)
+D_3_2_3 <- norma(D_3_2_3)
+D_3_2_4 <- norma(D_3_2_4)
+D_3_3_1 <- norma(D_3_3_1)
+D_4_1_1 <- norma(D_4_1_1)
+D_4_1_2 <- norma(D_4_1_2)
+D_4_1_3 <- norma(D_4_1_3)
+D_4_1_4 <- norma(D_4_1_4)
+D_4_2_1 <- norma(D_4_2_1)
+D_4_2_2 <- norma(D_4_2_2)
+D_4_2_3 <- norma(D_4_2_3)
+D_4_2_4 <- norma(D_4_2_4)
+D_5_1_1 <- norma(D_5_1_1)
+D_5_1_2 <- norma(D_5_1_2)
+D_5_2_1 <- norma(D_5_2_1)
+D_5_2_2 <- norma(D_5_2_2)
+D_5_2_3 <- norma(D_5_2_3)
+D_5_2_4 <- norma(D_5_2_4)
+D_6_1_1 <- norma(D_6_1_1)
+D_6_1_2 <- norma(D_6_1_2)
+D_6_1_3 <- norma(D_6_1_3)
+D_6_2_1 <- norma(D_6_2_1)
+D_6_2_2 <- norma(D_6_2_2)
+D_6_2_3 <- norma(D_6_2_3)
+D_7_1_1 <- norma(D_7_1_1)
+D_7_1_2 <- norma(D_7_1_2)
+D_7_1_3 <- norma(D_7_1_3)
+D_7_1_4 <- norma(D_7_1_4)
+```
+
+## Re-escalar en base el valor de Catalunya l'any 2015 degut a que es l'any amb més informació disponible
+
+```{r}
+reescalar_any_base <- function(data, año_base) {
+  columna_base <- match(año_base, names(data))
+  factor_escala <- as.numeric(100 / data[43, columna_base])
+  data <- data %>% mutate_at(vars(-1), ~ . * factor_escala)
+  return(data)
+}
+```
+
+```{r}
+D_1_1_1 <- reescalar_any_base(D_1_1_1, 2015)
+D_1_1_2 <- reescalar_any_base(D_1_1_2, 2015)
+D_1_1_3 <- reescalar_any_base(D_1_1_3, 2015)
+D_1_2_1 <- reescalar_any_base(D_1_2_1, 2015)
+D_1_2_2 <- reescalar_any_base(D_1_2_2, 2015)
+D_1_2_3 <- reescalar_any_base(D_1_2_3, 2015)
+D_1_3_1 <- reescalar_any_base(D_1_3_1, 2015)
+D_1_3_2 <- reescalar_any_base(D_1_3_2, 2015)
+D_2_1_1 <- reescalar_any_base(D_2_1_1, 2015)
+D_2_1_2 <- reescalar_any_base(D_2_1_2, 2015)
+D_2_1_3 <- reescalar_any_base(D_2_1_3, 2015)
+D_2_1_4 <- reescalar_any_base(D_2_1_4, 2015)
+D_2_1_5 <- reescalar_any_base(D_2_1_5, 2015)
+D_2_1_6 <- reescalar_any_base(D_2_1_6, 2015)
+D_2_1_7 <- reescalar_any_base(D_2_1_7, 2015)
+D_2_1_8 <- reescalar_any_base(D_2_1_8, 2015)
+D_2_1_9 <- reescalar_any_base(D_2_1_9, 2015)
+D_2_2_1 <- reescalar_any_base(D_2_2_1, 2015)
+D_2_2_2 <- reescalar_any_base(D_2_2_2, 2015)
+D_2_2_3 <- reescalar_any_base(D_2_2_3, 2015)
+D_2_3_1 <- reescalar_any_base(D_2_3_1, 2015)
+D_2_3_2 <- reescalar_any_base(D_2_3_2, 2015)
+D_2_3_3 <- reescalar_any_base(D_2_3_3, 2015)
+D_3_1_1 <- reescalar_any_base(D_3_1_1, 2015)
+D_3_1_2 <- reescalar_any_base(D_3_1_2, 2015)
+D_3_1_3 <- reescalar_any_base(D_3_1_3, 2015)
+D_3_1_4 <- reescalar_any_base(D_3_1_4, 2015)
+D_3_1_5 <- reescalar_any_base(D_3_1_5, 2015)
+D_3_1_6 <- reescalar_any_base(D_3_1_6, 2015)
+D_3_2_1 <- reescalar_any_base(D_3_2_1, 2015)
+D_3_2_2 <- reescalar_any_base(D_3_2_2, 2015)
+D_3_2_3 <- reescalar_any_base(D_3_2_3, 2015)
+D_3_2_4 <- reescalar_any_base(D_3_2_4, 2015)
+D_3_3_1 <- reescalar_any_base(D_3_3_1, 2015)
+D_4_1_1 <- reescalar_any_base(D_4_1_1, 2015)
+D_4_1_2 <- reescalar_any_base(D_4_1_2, 2015)
+D_4_1_3 <- reescalar_any_base(D_4_1_3, 2015)
+D_4_1_4 <- reescalar_any_base(D_4_1_4, 2015)
+D_4_2_1 <- reescalar_any_base(D_4_2_1, 2015)
+D_4_2_2 <- reescalar_any_base(D_4_2_2, 2015)
+D_4_2_3 <- reescalar_any_base(D_4_2_3, 2015)
+D_4_2_4 <- reescalar_any_base(D_4_2_4, 2015)
+D_5_1_1 <- reescalar_any_base(D_5_1_1, 2015)
+D_5_1_2 <- reescalar_any_base(D_5_1_2, 2015)
+D_5_2_1 <- reescalar_any_base(D_5_2_1, 2015)
+D_5_2_2 <- reescalar_any_base(D_5_2_2, 2015)
+D_5_2_3 <- reescalar_any_base(D_5_2_3, 2015)
+D_5_2_4 <- reescalar_any_base(D_5_2_4, 2015)
+D_6_1_1 <- reescalar_any_base(D_6_1_1, 2015)
+D_6_1_2 <- reescalar_any_base(D_6_1_2, 2015)
+D_6_1_3 <- reescalar_any_base(D_6_1_3, 2015)
+D_6_2_1 <- reescalar_any_base(D_6_2_1, 2015)
+D_6_2_2 <- reescalar_any_base(D_6_2_2, 2015)
+D_6_2_3 <- reescalar_any_base(D_6_2_3, 2015)
+D_7_1_1 <- reescalar_any_base(D_7_1_1, 2015)
+D_7_1_2 <- reescalar_any_base(D_7_1_2, 2015)
+D_7_1_3 <- reescalar_any_base(D_7_1_3, 2015)
+D_7_1_4 <- reescalar_any_base(D_7_1_4, 2015)
+```
+
+```{r}
+#D_1
+D_1_alt <- data.frame(matrix(0, nrow = 43, ncol = 14))
+colnames(D_1_alt) <- colnames(D_1_1_1)
+for (i in 1:43) {
+  D_1_alt[i, 1] <- D_1_1_1[i, 1]
+  for (j in 2:14) {
+    D_1_alt[i, j] <- as.numeric((D_1_1_1[i, j] + D_1_1_2[i, j] + D_1_1_3[i, j] + D_1_2_1[i, j] + D_1_2_2[i, j] + D_1_2_3[i, j] + D_1_3_1[i, j] + D_1_3_2[i, j]) / 8)
+  }
+}
+
+#D_2
+D_2_alt <- data.frame(matrix(0, nrow = 43, ncol = 14))
+colnames(D_2_alt) <- colnames(D_2_1_1)
+for (i in 1:43) {
+  D_2_alt[i, 1] <- D_2_1_1[i, 1]
+  for (j in 2:14) {
+    D_2_alt[i, j] <- as.numeric((D_2_1_1[i, j] + D_2_1_2[i, j] + D_2_1_3[i, j] + D_2_1_4[i, j] + D_2_1_5[i, j] + D_2_1_6[i, j] + D_2_1_7[i, j] + D_2_1_8[i, j] + D_2_1_9[i, j] + D_2_2_1[i, j] + D_2_2_2[i, j] + D_2_2_3[i, j] + D_2_3_1[i, j] + D_2_3_2[i, j] + D_2_3_3[i, j]) / 15)
+  }
+}
+#D_3
+D_3_alt <- data.frame(matrix(0, nrow = 43, ncol = 14))
+colnames(D_3_alt) <- colnames(D_3_1_1)
+for (i in 1:43) {
+  D_3_alt[i, 1] <- D_3_1_1[i, 1]
+  for (j in 2:14) {
+    D_3_alt[i, j] <- as.numeric((D_3_1_1[i, j] + D_3_1_2[i, j] + D_3_1_3[i, j] + D_3_1_4[i, j] + D_3_1_5[i, j] + D_3_1_6[i, j] + D_3_2_1[i, j] + D_3_2_2[i, j] + D_3_2_3[i, j] + D_3_2_4[i, j] + D_3_3_1[i, j]) / 11)
+  }
+}
+
+#D_4
+D_4_alt <- data.frame(matrix(0, nrow = 43, ncol = 14))
+colnames(D_4_alt) <- colnames(D_4_1_1)
+for (i in 1:43) {
+  D_4_alt[i, 1] <- D_4_1_1[i, 1]
+  for (j in 2:14) {
+    D_4_alt[i, j] <- as.numeric((D_4_1_1[i, j] + D_4_1_2[i, j] + D_4_1_3[i, j] + D_4_1_4[i, j] + D_4_2_1[i, j] + D_4_2_2[i, j] + D_4_2_3[i, j] + D_4_2_4[i, j]) / 8)
+  }
+}
+
+#D_5
+D_5_alt <- data.frame(matrix(0, nrow = 43, ncol = 14))
+colnames(D_5_alt) <- colnames(D_5_1_1)
+for (i in 1:43) {
+  D_5_alt[i, 1] <- D_5_1_1[i, 1]
+  for (j in 2:14) {
+    D_5_alt[i, j] <- as.numeric((D_5_1_1[i, j] + D_5_1_2[i, j] + D_5_2_1[i, j] + D_5_2_2[i, j] + D_5_2_3[i, j] + D_5_2_4[i, j]) / 6)
+  }
+}
+
+#D_6
+D_6_alt <- data.frame(matrix(0, nrow = 43, ncol = 14))
+colnames(D_6_alt) <- colnames(D_6_1_1)
+for (i in 1:43) {
+  D_6_alt[i, 1] <- D_6_1_1[i, 1]
+  for (j in 2:14) {
+    D_6_alt[i, j] <- as.numeric((D_6_1_1[i, j] + D_6_1_2[i, j] + D_6_1_3[i, j] + D_6_2_1[i, j] + D_6_2_2[i, j] + D_6_2_3[i, j]) / 6)
+  }
+}
+
+#D_7
+D_7_alt <- data.frame(matrix(0, nrow = 43, ncol = 14))
+colnames(D_7_alt) <- colnames(D_7_1_1)
+for (i in 1:43) {
+  D_7_alt[i, 1] <- D_7_1_1[i, 1]
+  for (j in 2:14) {
+    D_7_alt[i, j] <- as.numeric((D_7_1_1[i, j] + D_7_1_2[i, j] + D_7_1_3[i, j] + D_7_1_4[i, j]) / 4)
+  }
+}
+```
+
+```{r}
+IMCV_alt <- data.frame(matrix(0, nrow = 43, ncol = 14))
+colnames(IMCV_alt) <- colnames(D_1_alt)
+for (i in 1:43) {
+  IMCV_alt[i, 1] <- D_1_alt[i, 1]
+  for (j in 2:14) {
+    IMCV_alt[i, j] <- as.numeric((D_1_alt[i, j] + D_2_alt[i, j] + D_3_alt[i, j] + D_4_alt[i, j] + D_5_alt[i, j] + D_6_alt[i, j] + D_7_alt[i, j]) / 7)
+  }
+}
+```
+
+```{r}
+#save(D_1_alt, D_2_alt, D_3_alt, D_4_alt, D_5_alt, D_6_alt, D_7_alt, IMCV_alt, file = "Dimensions_2.RData")
+#rm(list = ls())
+#load("Dimensions_2.RData")
+```
+
+## Shiny
+
+### Comparació comarques indicador:
+
+```{r eval=FALSE, include=FALSE}
+ui <- fluidPage(
+  titlePanel("Indicador Compost de la Qualitat de Vida"),
+  sidebarLayout(
+    sidebarPanel(
+      selectInput("year", "Selecciona un any:", 
+                  choices = colnames(D_1_alt)[-1], selected = "2022"),
+      sliderInput("slider_D1", "Importancia Economia i treball:", min = 0, max = 10, value = 5),
+      sliderInput("slider_D2", "Importancia Oci i cultura:", min = 0, max = 10, value = 5),
+      sliderInput("slider_D3", "Importancia Salut:", min = 0, max = 10, value = 5),
+      sliderInput("slider_D4", "Importancia Educació:", min = 0, max = 10, value = 5),
+      sliderInput("slider_D5", "Importancia Medi ambient:", min = 0, max = 10, value = 5),
+      sliderInput("slider_D6", "Importancia Seguretat:", min = 0, max = 10, value = 5),
+      sliderInput("slider_D7", "Importancia Població:", min = 0, max = 10, value = 5)
+    ),
+    mainPanel(
+      plotOutput("barplot", height = "800px")
+    )
+  )
+)
+server <- function(input, output) {
+  output$barplot <- renderPlot({
+    
+    year_selected <- as.numeric(input$year)
+    
+    importancia_D1 <- input$slider_D1
+    importancia_D2 <- input$slider_D2
+    importancia_D3 <- input$slider_D3
+    importancia_D4 <- input$slider_D4
+    importancia_D5 <- input$slider_D5
+    importancia_D6 <- input$slider_D6
+    importancia_D7 <- input$slider_D7
+    
+    datos_filtrados_D1 <- D_1_alt[, c("Comarca", as.character(year_selected))]
+    datos_filtrados_D2 <- D_2_alt[, c("Comarca", as.character(year_selected))]
+    datos_filtrados_D3 <- D_3_alt[, c("Comarca", as.character(year_selected))]
+    datos_filtrados_D4 <- D_4_alt[, c("Comarca", as.character(year_selected))]
+    datos_filtrados_D5 <- D_5_alt[, c("Comarca", as.character(year_selected))]
+    datos_filtrados_D6 <- D_6_alt[, c("Comarca", as.character(year_selected))]
+    datos_filtrados_D7 <- D_7_alt[, c("Comarca", as.character(year_selected))]
+    
+    media_ponderada <- (
+      (importancia_D1 * datos_filtrados_D1[, 2]) +
+      (importancia_D2 * datos_filtrados_D2[, 2]) +
+      (importancia_D3 * datos_filtrados_D3[, 2]) +
+      (importancia_D4 * datos_filtrados_D4[, 2]) +
+      (importancia_D5 * datos_filtrados_D5[, 2]) +
+      (importancia_D6 * datos_filtrados_D6[, 2]) +
+      (importancia_D7 * datos_filtrados_D7[, 2])
+    ) / (
+      importancia_D1 + importancia_D2 + importancia_D3 +
+      importancia_D4 + importancia_D5 + importancia_D6 + importancia_D7
+    )
+
+ggplot(data.frame(Comarca = datos_filtrados_D1$Comarca, Media = media_ponderada), 
+         aes(x = reorder(Comarca, -Media), y = Media, fill = Comarca)) +
+    geom_bar(stat = "identity", width = 0.7) +
+    labs(x = paste("Comarca (", year_selected, ")", sep = ""), y = "Mitjana ponderada") +
+    theme_minimal() +
+    theme(plot.title = element_text(size = 20), axis.text.y = element_text(size = 14)) +
+    scale_fill_manual(values = c("Catalunya" = "red")) +
+    guides(fill = FALSE) +
+    coord_flip()
+}, height = 800) 
+
+}
+shinyApp(ui, server)
+```
+
+### Evolució temps:
+
+```{r eval=FALSE, include=FALSE}
+ui <- dashboardPage(
+  dashboardHeader(title = "Indicador Compost de la Qualitat de Vida"),
+  dashboardSidebar(
+    checkboxGroupInput("comarcas", "Selecciona una o més comarques:",
+                       choices = unique(D_1_alt$Comarca),
+                       selected = NULL)
+  ),
+  dashboardBody(
+    column(
+      width = 12,
+      box(
+        title = "Indicador Compost",
+        plotOutput("grafico_imcv", height = "200px") 
+      )
+    ),
+    fluidRow(
+      box(
+        title = "Economia i treball",
+        plotOutput("grafico_1", height = "100px")
+      ),
+      box(
+        title = "Oci i cultura",
+        plotOutput("grafico_2", height = "100px")
+      ),
+      box(
+        title = "Salut",
+        plotOutput("grafico_3", height = "100px")
+      ),
+      box(
+        title = "Educació",
+        plotOutput("grafico_4", height = "100px")
+      ),
+      box(
+        title = "Medi ambient",
+        plotOutput("grafico_5", height = "100px")
+      ),
+      box(
+        title = "Seguretat",
+        plotOutput("grafico_6", height = "100px")
+      ),
+      box(
+        title = "Població",
+        plotOutput("grafico_7", height = "100px")
+      )
+    )
+  )
+)
+
+server <- function(input, output) {
+
+  crear_grafico <- function(base_datos, id_grafico) {
+    output[[id_grafico]] <- renderPlot({
+      comarcas_seleccionadas <- input$comarcas
+
+      datos_comarcas <- base_datos %>%
+        filter(Comarca %in% comarcas_seleccionadas)
+      
+      datos_comarcas_largo <- tidyr::pivot_longer(datos_comarcas, cols = -Comarca, names_to = "Año", values_to = "Valor")
+      
+      ggplot(datos_comarcas_largo, aes(x = as.integer(Año), y = Valor, color = Comarca)) +
+        geom_line() +
+        labs(x = "Any",
+             y = "Valor de l'Indicador") +
+        scale_color_discrete(name = "Comarca")
+    })
+  }
+  
+  output$grafico_imcv <- renderPlot({
+    comarcas_seleccionadas <- input$comarcas
+    
+
+    datos_imcv <- IMCV_alt %>%
+      filter(Comarca %in% comarcas_seleccionadas)
+    
+    datos_imcv_largo <- tidyr::pivot_longer(datos_imcv, cols = -Comarca, names_to = "Año", values_to = "Valor")
+    
+    ggplot(datos_imcv_largo, aes(x = as.integer(Año), y = Valor, color = Comarca)) +
+      geom_line() +
+      labs(title = "Evolució de l'Indicador compost per Comarques",
+           x = "Any",
+           y = "Valor de l'Indicador") +
+      scale_color_discrete(name = "Comarca")
+  })
+  
+  crear_grafico(D_1_alt, "grafico_1")
+  crear_grafico(D_2_alt, "grafico_2")
+  crear_grafico(D_3_alt, "grafico_3")
+  crear_grafico(D_4_alt, "grafico_4")
+  crear_grafico(D_5_alt, "grafico_5")
+  crear_grafico(D_6_alt, "grafico_6")
+  crear_grafico(D_7_alt, "grafico_7")
+}
+
+shinyApp(ui, server)
+```
+
+## Anàlisis de resultats
+
+```{r}
+comarca_seleccionada <- "Catalunya"
+data_comarca <- IMCV_alt %>%
+  filter(Comarca == comarca_seleccionada)
+
+columna_anys <- colnames(data_comarca)[2:ncol(data_comarca)]
+
+tabla_resultados <- data.frame(
+  Año = as.integer(columna_anys),
+  Valor = as.numeric(unlist(data_comarca[, 2:ncol(data_comarca)]))
+)
+
+print(tabla_resultados)
+```
+
+```{r}
+grafico_lineas <- ggplot(tabla_resultados, aes(x = Año, y = Valor)) +
+  geom_line() +
+  labs(title = paste("Evolució de l'indicador per", comarca_seleccionada),
+       x = "Any",
+       y = "Valor Índex Compost")
+print(grafico_lineas)
+```
+
+```{r}
+tabla <- data.frame(
+  "Dimensió" = c("Economia i treball", "Oci i cultura", "Salut", "Educació", "Medi ambient", "Seguretat", "Població"),
+  "MAX" = c(1035, 135, 135, 135, 135, 135, 135),
+  "MIN" = c(90, 90, 90, 90, 90, 90, 90),
+  "Any 2010" = c(95.952500, 122.0826759, 105.049831, 107.101158, 106.91831, 100, 99.47630),
+  "Any 2015" = c(100, 100, 100, 100, 100, 100, 100),
+  "Any 2022" = c(102.206046, 109.03940, 97.302725, 97.264254, 98.07423, 100, 109.17251)
+)
+
+print(tabla[,-c(2,3)])
+tabla <- as.data.frame(t(tabla))
+colnames(tabla) <- tabla[1, ]
+tabla <- tabla[-1,]
+tabla <- as.data.frame(apply(tabla, 2, as.numeric))
+rownames(tabla) <- c("MAX", "MIN", "2010", "2015", "2020")
+
+
+radarchart(tabla,
+           cglty = 1,       # Tipo de línea del grid
+           cglcol = "gray", # Color del grid
+           pcol = 2:4,      # Color para cada línea
+           plwd = 2,        # Ancho para cada línea
+           plty = 1)        # Tipos de línea 
+
+legend("topright",
+       legend = paste("Any", c(2010, 2015, 2022)),
+       bty = "n", pch = 20, col = areas,
+       text.col = "grey25", pt.cex = 2)
+ 
+```
+
+```{r}
+# D_1
+comarca_seleccionada <- "Catalunya"
+data_comarca <- D_1_alt %>%
+  filter(Comarca == comarca_seleccionada)
+
+columna_anys <- colnames(data_comarca)[2:ncol(data_comarca)]
+
+tabla_resultados_D_1_alt <- data.frame(
+  Año = as.integer(columna_anys),
+  Valor = as.numeric(unlist(data_comarca[, 2:ncol(data_comarca)]))
+)
+
+grafico_lineas <- ggplot(tabla_resultados_D_1_alt, aes(x = Año, y = Valor, color = "Economia i treball")) +
+  geom_line() +
+  labs(title = paste("Evolució de l'indicador per", comarca_seleccionada),
+       x = "Any",
+       y = "Valor de l'Indicador")
+
+# D_2
+data_comarca <- D_2_alt %>%
+  filter(Comarca == comarca_seleccionada)
+tabla_resultados_D_2_alt <- data.frame(
+  Año = as.integer(columna_anys),
+  Valor = as.numeric(unlist(data_comarca[, 2:ncol(data_comarca)]))
+)
+
+grafico_lineas_nuevo <- grafico_lineas +
+  geom_line(data = tabla_resultados_D_2_alt, aes(x = Año, y = Valor, color = "Oci i cultura")) +
+  labs(color = "Indicador:")
+
+# D_3
+data_comarca <- D_3_alt %>%
+  filter(Comarca == comarca_seleccionada)
+tabla_resultados_D_3_alt <- data.frame(
+  Año = as.integer(columna_anys),
+  Valor = as.numeric(unlist(data_comarca[, 2:ncol(data_comarca)]))
+)
+
+grafico_lineas_nuevo <- grafico_lineas_nuevo +
+  geom_line(data = tabla_resultados_D_3_alt, aes(x = Año, y = Valor, color = "Salut"))
+
+# D_4
+data_comarca <- D_4_alt %>%
+  filter(Comarca == comarca_seleccionada)
+tabla_resultados_D_4_alt <- data.frame(
+  Año = as.integer(columna_anys),
+  Valor = as.numeric(unlist(data_comarca[, 2:ncol(data_comarca)]))
+)
+
+grafico_lineas_nuevo <- grafico_lineas_nuevo +
+  geom_line(data = tabla_resultados_D_4_alt, aes(x = Año, y = Valor, color = "Educació"))
+
+# D_5
+data_comarca <- D_5_alt %>%
+  filter(Comarca == comarca_seleccionada)
+tabla_resultados_D_5_alt <- data.frame(
+  Año = as.integer(columna_anys),
+  Valor = as.numeric(unlist(data_comarca[, 2:ncol(data_comarca)]))
+)
+
+grafico_lineas_nuevo <- grafico_lineas_nuevo +
+  geom_line(data = tabla_resultados_D_5_alt, aes(x = Año, y = Valor, color = "Medi ambient"))
+
+# D_6
+data_comarca <- D_6_alt %>%
+  filter(Comarca == comarca_seleccionada)
+tabla_resultados_D_6_alt <- data.frame(
+  Año = as.integer(columna_anys),
+  Valor = as.numeric(unlist(data_comarca[, 2:ncol(data_comarca)]))
+)
+
+grafico_lineas_nuevo <- grafico_lineas_nuevo +
+  geom_line(data = tabla_resultados_D_6_alt, aes(x = Año, y = Valor, color = "Seguretat"))
+
+# D_7
+data_comarca <- D_7_alt %>%
+  filter(Comarca == comarca_seleccionada)
+tabla_resultados_D_7_alt <- data.frame(
+  Año = as.integer(columna_anys),
+  Valor = as.numeric(unlist(data_comarca[, 2:ncol(data_comarca)]))
+)
+
+grafico_lineas_nuevo <- grafico_lineas_nuevo +
+  geom_line(data = tabla_resultados_D_7_alt, aes(x = Año, y = Valor, color = "Població"))
+
+# IMCV
+data_comarca <- IMCV_alt %>%
+  filter(Comarca == comarca_seleccionada)
+tabla_resultados_IMCV_alt <- data.frame(
+  Año = as.integer(columna_anys),
+  Valor = as.numeric(unlist(data_comarca[, 2:ncol(data_comarca)]))
+)
+
+grafico_lineas_nuevo <- grafico_lineas_nuevo +
+  geom_line(data = tabla_resultados_IMCV_alt, aes(x = Año, y = Valor, color = "IMCV"),size = 1.5)
+
+# Imprimir el gráfico con ambas líneas
+print(grafico_lineas_nuevo)
+
+```
+
